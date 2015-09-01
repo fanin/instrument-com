@@ -1,0 +1,20 @@
+{
+  "name": "your-app",
+  "version": "0.1.0",
+  "main": "main.js",
+  "devDependencies": {
+    "browserify": "^11.0.1",
+    "del": "^1.2.0",
+    "flux": "^2.0.3",
+    "gulp": "^3.9.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-minify-css": "^1.2.0",
+    "gulp-uglify": "^1.2.0",
+    "keymirror": "^0.1.1",
+    "object-assign": "^3.0.0",
+    "reactify": "^1.1.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "vinyl-transform": "^1.0.0"
+  }
+}
