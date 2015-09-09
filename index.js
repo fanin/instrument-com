@@ -1,4 +1,9 @@
 'use strict';
+/**
+*   Module use to communicate with GWINSTEK's DSO through Ethernet or USB
+*
+*   @module instrument-com
+*/
 var net     = require('net');
 var fs      = require('fs');
 var async   = require('async');
@@ -10,16 +15,16 @@ var debug = require('debug');
 var log = debug('index:log');
 var info = debug('index:info');
 var error = debug('index:error');
-var sytConstant=require('./sysConstant.js');
-var syscmd = require('./system.js');
-var trigcmd = require('./trigger.js');
-var acqcmd = require('./acquire.js');
-var horcmd = require('./horizontal.js');
-var mathcmd = require('./math.js');
-var meascmd = require('./measure.js');
-var channel = require('./channel.js');
-    // usbDev = require('./devUsb.js');
-var usbDev = require('./devUsbFs.js');
+var sytConstant=require('.//msoDriver/sysConstant.js');
+var syscmd = require('./msoDriver/system.js');
+var trigcmd = require('./msoDriver/trigger.js');
+var acqcmd = require('./msoDriver/acquire.js');
+var horcmd = require('./msoDriver/horizontal.js');
+var mathcmd = require('./msoDriver/math.js');
+var meascmd = require('./msoDriver/measure.js');
+var channel = require('./msoDriver/channel.js');
+    // usbDev = require('./msoDriver/devUsb.js');
+var usbDev = require('./msoDriver/devUsbFs.js');
 var supportType = ['GDS2000E'];
 //
 
@@ -778,7 +783,7 @@ Dso.prototype.reloadState = function(cb) {
 };
 
 function getCmdObj() {
-    var FilePath = path.join(__dirname, '/command.json');
+    var FilePath = path.join(__dirname, '/msoDriver/command.json');
 
     this.commandObj = JSON.parse(fs.readFileSync(FilePath));
 }
@@ -911,7 +916,16 @@ Dso.prototype.cmd_write = function(cmdSequence) {
 
 
 }
-var DsoObj = function() {
+
+/**
+*   Create all needed private properties and method
+*
+*   @private
+*   @constructor _DsoObj
+*
+*   @return {Object} Private method used to control DSO
+*/
+var _DsoObj = function() {
 
     var dsoObj = new Dso();
 
@@ -946,41 +960,24 @@ var DsoObj = function() {
     return dsoObj;
 };
 
-//////////////////////////////// usbDetect structure architecture
-// locationId: 335544320,
-// vendorId: 1452,
-// productId: 32775,
-// deviceName: 'XHCI Root Hub USB 2.0 Simulation',
-// manufacturer: 'Apple Inc.',
-// serialNumber: '',
-// deviceAddress: 129
-//////////////////////////////////
-
-/////////////////////////////////usb structure architecture
-// busNumber: 21,
-// deviceAddress: 128,
-// deviceDescriptor: { bLength: 18,
-//    bDescriptorType: 1,
-//    bcdUSB: 768,
-//    bDeviceClass: 9,
-//    bDeviceSubClass: 0,
-//    bDeviceProtocol: 3,
-//    bMaxPacketSize0: 9,
-//    idVendor: 1452,
-//    idProduct: 32775,
-//    bcdDevice: 768,
-//    iManufacturer: 2,
-//    iProduct: 1,
-//    iSerialNumber: 0,
-//    bNumConfigurations: 1
-// },
-// portNumbers: []
-//////////////////////////////////////
-
-var DsoCtrl = function(dsoObj) {
+/**
+*   The class define all needed public properties and methods
+*
+*   @class dsoctrl
+*
+*
+*/
+var _DsoCtrl = function(dsoObj) {
     var dsoctrl = {};
 
-    ////////////////////////////
+/**
+*   The method belong to dsoctrl class used to connect to device,
+*   connect method must be called and wait to complete before any dsoctrl method.
+*
+*   @method connect
+*   @param {Function} callback  callback(e) Called when connection has been made
+*
+*/
     dsoctrl.connect = (function(callback) {
         if (this.interf === 'usb') {
             this.usbConnect(callback);
@@ -989,7 +986,14 @@ var DsoCtrl = function(dsoObj) {
         }
     }).bind(dsoObj);
 
-    ////////////////////////////
+/**
+*   The method belong to dsoctrl class used to load all properties from device,
+*   like trigger type, channel state .. etc.
+*
+*   @method reloadState
+*   @param {Function} callback callback(e) Called when finished loading
+*
+*/
     dsoctrl.reloadState = (function(callback) {
         var chCmd = [];
         var self = this;
@@ -1016,7 +1020,26 @@ var DsoCtrl = function(dsoObj) {
 
     }).bind(dsoObj);
 
-    ///////////////////////////
+/**
+*   The method belong to dsoctrl class used to load horizontal properties from device,
+*   like time division, position .. etc.
+*
+*   @method getHorizontal
+*   @param {Function} callback callback(e, horProperty) Called when finished loading
+*
+*/
+/**
+*   Horizontal property of device.
+*
+*   @property horProperty
+*   @type Object
+*   @param {String} position Specify the distance with triggered pointer of the main window
+*   @param {String} zposition Specify the distance with triggered pointer of the zoom window
+*   @param {String} scale Specify the time divison of the main window
+*   @param {String} zscale Specify the time divison of the zoom window
+*   @param {String} mode Specify which mode device on
+*   @param {String} expand Specify timebase expand by center or trigger position
+*/
     dsoctrl.getHorizontal = (function(callback) {
         // this.GetSnapshot(callback);
         var self = this;
@@ -1040,7 +1063,32 @@ var DsoCtrl = function(dsoObj) {
         this.emit('cmd_write', cmd);
     }).bind(dsoObj);
 
-    ///////////////////////////
+/**
+*   The method belong to dsoctrl class used to load vertical properties from device,
+*   like scale, position .. etc.
+*
+*   @method getVertical
+*   @param {String} ch Specify which channel wants to be loaded
+*   @param {Function} callback callback(e, chProperty) Called when finished loading
+*
+*/
+/**
+*   Channel property of device.
+*
+*   @property chProperty
+*   @type Object
+*   @param {String} coupling Specify coupling on AC,DC or GND
+*   @param {String} impedance Specify the impedance of the analog channel
+*   @param {String} invert
+*   @param {String} bandwidth
+*   @param {String} expand
+*   @param {String} state
+*   @param {String} position
+*   @param {String} deskew
+*   @param {String} rawdata
+*   @param {String} probe.unit
+*   @param {String} probe.atten
+*/
     dsoctrl.getVertical = (function(ch, callback) {
         // this.GetSnapshot(callback);
         var self = this;
@@ -1066,7 +1114,13 @@ var DsoCtrl = function(dsoObj) {
         }
     }).bind(dsoObj);
 
-    ////////////////////////////
+/**
+*   The method belong to dsoctrl class used to get the current screen from device,
+*
+*   @method getSnapshot
+*   @param {Function} callback callback(e, dsipData) Called when finished loading
+*
+*/
     dsoctrl.getSnapshot = (function(callback) {
         // this.GetSnapshot(callback);
         var self = this;
@@ -1084,7 +1138,15 @@ var DsoCtrl = function(dsoObj) {
         this.emit('cmd_write', cmd);
     }).bind(dsoObj);
 
-    ////////////////////////////
+/**
+*   The method belong to dsoctrl class used to get the data in acquisition memory for
+*   the selected channel form device
+*
+*   @method getRawdata
+*   @param {String} ch Specify which channel wants to be loaded
+*   @param {Function} callback callback(e, rawData) Called when finished loading
+*
+*/
     dsoctrl.getRawdata = (function(ch, callback) {
         // this.GetRawdata(ch,callback);
         var self = this;
@@ -1119,7 +1181,30 @@ var DsoCtrl = function(dsoObj) {
         this.errHandler = callback;
     }).bind(dsoObj);
 
-    ///////////////////////////
+/**
+*   The method belong to dsoctrl class used to get the edge trigger properties from device
+*
+*   @method getEdgeTrig
+*   @param {Function} callback callback(e, trigProperty) Called when finished loading
+*
+*/
+/**
+*   Trigger property of device.
+*
+*   @property trigProperty
+*   @type Object
+*   @param {String} type
+*   @param {String} source
+*   @param {String} mode
+*   @param {String} holdoff
+*   @param {String} noise_rej
+*   @param {String} reject
+*   @param {String} level
+*   @param {String} alt
+*   @param {String} state
+*   @param {String} edge.coupling
+*   @param {String} edge.slop
+*/
     dsoctrl.getEdgeTrig = (function(callback) {
         var self = this;
         function edgeTrig(e) {
@@ -1146,7 +1231,33 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(trigCmd);
         this.emit('cmd_write', trigCmd);
     }).bind(dsoObj);
-    ///////////////////////////
+
+
+/**
+*   The method belong to dsoctrl class used to get the measurment properties
+*   for the selected measure channel from device
+*
+*   @method getMeas
+*   @param {String} mCh Specify which measure channel wants to be loaded
+*   @param {Function} callback callback(e, measProperty) Called when finished loading
+*
+*/
+/**
+*   Measurement property of device.
+*
+*   @property measProperty
+*   @type Object
+*   @param {String} stdValue
+*   @param {String} minValue
+*   @param {String} meanValue
+*   @param {String} value
+*   @param {String} state
+*   @param {String} source1
+*   @param {String} source2
+*   @param {String} type
+*   @param {String} state
+*/
+
     dsoctrl.getMeas = (function(mCh, callback) {
         var self = this;
         function measCmd(e) {
@@ -1171,7 +1282,6 @@ var DsoCtrl = function(dsoObj) {
                 {id:mCh,prop:'MeasureMean',arg:'',cb:null,method:'get'},
                 {id:mCh,prop:'MeasureMax',arg:'',cb:null,method:'get'}
             ];
-        // this.GetRawdata(ch,callback);
 
         if(this.sys.staMode === 'ON'){
             this.cmdSequence = this.cmdSequence.concat(measStd);
@@ -1179,14 +1289,42 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(measVal);
         this.emit('cmd_write', measCmd);
     }).bind(dsoObj);
-    ///////////////////////////
+
+/**
+*   The method belong to dsoctrl class used to get the measurment type
+*   of device supported
+*
+*   @method supportedMeasType
+*   @param {Array} measureType
+*
+*/
     dsoctrl.supportedMeasType = (function(callback) {
         var self = this;
 
         log(this.commandObj[this.gdsType].MeasureType.parameter);
         return this.commandObj[this.gdsType].MeasureType.parameter;
     }).bind(dsoObj);
-    ///////////////////////////
+
+/**
+*   The method belong to dsoctrl class used to setup a periodical measure channel with specify measure type
+*   and source channel
+*
+*   @method setMeas
+*   @param {Object} measConf Config to setup a measure channel
+*   @param {Function} callback Called when finished setting
+*
+*/
+
+/**
+*
+*   Object used to setup a measure channel
+*
+*   @property measConf
+*   @type Object
+*   @param {String} src1 Specify first source channel for measurement
+*   @param {String} src2 Specify second source channel for delay measure type
+*   @param {String} type Specify measure type
+*/
     dsoctrl.setMeas = (function(conf,callback) {
         var self = this;
         function measCmd(e){
@@ -1225,7 +1363,14 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(measType);
         this.emit('cmd_write', measSet);
     }).bind(dsoObj);
-    ///////////////////////////
+
+/**
+*   The method belong to dsoctrl class used to turn on statistics for all measure channels
+*
+*   @method statisticOn
+*   @param {Function} callback Called when finished setting
+*
+*/
     dsoctrl.statisticOn = (function(callback) {
         var self = this;
         function measCmd(e) {
@@ -1243,7 +1388,14 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(measCmd);
         this.emit('cmd_write', measCmd);
     }).bind(dsoObj);
-    ///////////////////////////
+
+/**
+*   The method belong to dsoctrl class used to turn off statistics for all measure channels
+*
+*   @method statisticOff
+*   @param {Function} callback Called when finished setting
+*
+*/
     dsoctrl.statisticOff = (function(callback) {
         var self = this;
         function statistic(e) {
@@ -1261,7 +1413,15 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
+
+/**
+*   The method belong to dsoctrl class used to set the statistic weight all measure channels
+*
+*   @method statisticWeight
+*   @param {Number} weight Specify statistic weight
+*   @param {Function} callback Called when finished setting
+*
+*/
     dsoctrl.statisticWeight = (function(weight,callback) {
         var self = this;
         function statistic(e) {
@@ -1279,8 +1439,15 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
-    dsoctrl.Run = (function(callback){
+
+/**
+*   The method belong to dsoctrl class used to set the device into run state
+*
+*   @method run
+*   @param {Function} callback Called when finished setting
+*
+*/
+    dsoctrl.run = (function(callback){
         var self = this;
         function sysRun(e){
             if (e) {
@@ -1298,8 +1465,14 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
-    dsoctrl.Stop = (function(callback) {
+
+/**
+*   The method belong to dsoctrl class used to set the device into stop state
+*
+*   @method stop
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.stop = (function(callback) {
         var self = this;
         function sysStop(e) {
             if (e) {
@@ -1317,8 +1490,14 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
-    dsoctrl.Single = (function(callback) {
+
+/**
+*   The method belong to dsoctrl class used to set the device into single state
+*
+*   @method single
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.single = (function(callback) {
         var self = this;
         function sysSingle(e) {
             if (e){
@@ -1336,8 +1515,14 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
-    dsoctrl.Autoset = (function(callback){
+
+/**
+*   The method belong to dsoctrl class used to set the device into autoset state
+*
+*   @method Autoset
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.autoset = (function(callback){
         var self = this;
         function sysAutoset(e){
             if (e) {
@@ -1354,8 +1539,14 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
-    dsoctrl.Force = (function(callback) {
+
+/**
+*   The method belong to dsoctrl class used to set the device into force trigger state
+*
+*   @method force
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.force = (function(callback) {
         var self = this;
         function sysForce(e){
             if (e) {
@@ -1373,60 +1564,47 @@ var DsoCtrl = function(dsoObj) {
         this.cmdSequence = this.cmdSequence.concat(sysCmd);
         this.emit('cmd_write', sysCmd);
     }).bind(dsoObj);
-    ///////////////////////////
-    dsoctrl.getInstance = function() {
-        return dsoctrl;
-    };
+
 
     return dsoctrl;
 
 }
 
-
+/**
+*   Create new instance that used to communicate with instrument through Ethernet
+*
+*   @class dsoNet
+*   @constructor
+*   @extends dsoctrl
+*   @param {string} port Port number bind to TCP socket
+*   @param {string} host_addr Ip address bind to TCP socket
+*
+*   @return {Object} Return dsoctrl object
+*/
 exports.DsoNet  = function(port, host_addr) {
-    var dsoObj = DsoObj();
+    var dsoObj = _DsoObj();
         BindNetObj(dsoObj, port, host_addr);
 
-    return DsoCtrl(dsoObj);
+    return _DsoCtrl(dsoObj);
 };
 
-
+/**
+*   Create new instance that used to communicate with instrument through USB
+*
+*   @class dsoUSB
+*   @constructor
+*   @extends dsoctrl
+*   @param {string} vid Vender ID bind to USB device
+*   @param {string} pid Product ID bind to USB device
+*
+*   @return {Object} Return dsoctrl object
+*/
 exports.DsoUSB  = function(vid,pid) {
 
-    var dsoObj = DsoObj();
+    var dsoObj = _DsoObj();
         usbDev.BindUsbObj(dsoObj, vid, pid);
 
-    return DsoCtrl(dsoObj);
-
-    // var device;
-    // log('device number =  '+device.length);
-    // log(device);
-
-    // for(var i = 0,len = device.length;i<len;i++){
-    //     device[i].open();
-    //     device[1].getStringDescriptor(3, function(error, data){
-    //         log(data);
-    //         this.close();
-    //     }.bind(device[1]));
-    // }
-
-    // usbDetect.on('add', function(device) {
-    //     log('add ', device);
-    //     dsoUsb  =  usb.findByIds(0x2184, 0x003F);
-    //     log('GDS Device');
-    //     log(dsoUsb);
-    //     dsoUsb  =  usb.findByIds(0x003f,0x2184);//vid,pid
-    //     log('GDS Device');
-    //     log(dsoUsb);
-    // });
-    // usbDetect.on('remove', function(device) { log('remove ', device); });
-    // usbDetect.on('change', function(device) {
-    //     log('change ', device);
-    //     // log('List device ');
-    //     // log(usb.getDeviceList());
-
-    // });
-
+    return _DsoCtrl(dsoObj);
 };
 
 

@@ -15,43 +15,45 @@ var gulp       = require('gulp'),
 
 var LIB_PATH   = './',
     APP_NAME   = path.basename(__dirname),
-    APP_ENTRY  = './js/app.jsx',
+    APP_ENTRY  = './test/platform/atom/js/app.jsx',
     OUTPATH    = 'build/',
     DEBUG      = true;
 
 
 
 var watchSrc=[
-        'platform/atom/index.html','platform/atom/main.js','platform/atom/package.json',
-        'platfom/node/index.html','platform/node/server.js','platform/node/package.json',
-        'msoDriver/*.*','js/**/*.*',
-        'img/*.*'
-        ],
-    platformAtomSrc=[
-        'platform/atom/index.html',
-        'platform/atom/main.js',
-        'platform/atom/package.json',
-	'platform/atom/node_modules/**/*.*'
-        ],
-    platformNodeSrc=[
-        'platform/node/index.html',
-        'platform/node/server.js',
-        'platform/node/package.json',
-        'platform/node/node_modules/**/*.*',
-        ],
-    appSrc=[
+        'test/platform/atom/index.html','test/platform/atom/main.js','test/platform/atom/package.json',
+        'test/platfom/node/index.html','test/platform/node/server.js','test/platform/node/package.json',
+        'msoDriver/*.*','test/platform/atom/js/**/*.*',
+        'index.js'
+    ],
+    platformAtomSrc = [
+        'test/platform/atom/index.html',
+        'test/platform/atom/main.js',
+        'test/platform/atom/package.json',
+        'test/platform/atom/react/*.*',
+        'test/platform/atom/js/jquery/*.*',
+        'test/platform/atom/js/flot/*.*',
+        'test/platform/atom/img/*.*',
+        'test/platform/atom/semantic/**/*.*',
+        'test/platform/atom/js/jquery.knob.min.js',
+	    'test/platform/atom/node_modules/**/*.*'
+    ],
+    platformNodeSrc = [
+        'test/platform/node/index.html',
+        'test/platform/node/server.js',
+        'test/platform/node/package.json',
+        'test/platform/node/node_modules/**/*.*',
+    ],
+    appSrc = [
         'msoDriver/**/*.*',
-        'react/*.*',
-        'js/jquery/*.*',
-        'js/flot/*.*',
-        'img/*.*',
-        'semantic/**/*.*',
-        'js/jquery.knob.min.js'
-        ];
+        'index.js'
+
+    ];
 var ATOMOUTPATH    = 'build/atom/',
     NODEOUTPATH    = 'build/node/',
-    ATOMBASE    ='platform/atom',
-    NODEBASE    ='platform/node';
+    ATOMBASE    ='test/platform/atom',
+    NODEBASE    ='test/platform/node';
 
 gulp.task('build-atom',function() {
     var b = browserify({
@@ -69,7 +71,7 @@ gulp.task('build-atom',function() {
     b.pipe(gulp.dest(ATOMOUTPATH + APP_NAME + '/js/'));
 
     /* Build app css bundle */
-    gulp.src('css**/*.css')
+    gulp.src('test/platform/atom/css**/*.css')
         .pipe(concat('app.min.css'))
         .pipe(minifycss())
         .pipe(gulp.dest(ATOMOUTPATH + APP_NAME + '/css'));
@@ -83,26 +85,6 @@ gulp.task('build-atom',function() {
 });
 
 gulp.task('build-node',function() {
-    var b = browserify({
-            entries: [ APP_ENTRY ],
-            paths: [ LIB_PATH ],
-            debug: DEBUG
-        })
-        .transform(reactify)
-        .bundle()
-        .pipe(source('app.min.js'));
-
-    if (!DEBUG)
-        b = b.pipe(buffer()).pipe(uglify());
-
-    b.pipe(gulp.dest(NODEOUTPATH + APP_NAME + '/js/'));
-
-    /* Build app css bundle */
-    gulp.src('css**/*.css')
-        .pipe(concat('app.min.css'))
-        .pipe(minifycss())
-        .pipe(gulp.dest(NODEOUTPATH + APP_NAME + '/css'));
-
     /* Copy rest app resources */
     gulp.src(platformNodeSrc,{ base: NODEBASE })
         .pipe(gulp.dest(NODEOUTPATH + APP_NAME));

@@ -27,7 +27,7 @@ var AppScreenViewer = React.createClass({
             .on('click', function(event) {
                 console.log($(this).text());
                 if(self.state.RunStopState=='Run'){
-                    dsoCtrl.Stop();
+                    dsoCtrl.stop();
                     self.setState({
                         RunStopState:'Stop',
                         RunStopButtonClass:'mini ui compact negative circular button RunStopButton',
@@ -36,7 +36,7 @@ var AppScreenViewer = React.createClass({
                     });
                 }
                 else{
-                    dsoCtrl.Run();
+                    dsoCtrl.run();
                     self.setState({
                         RunStopState:'Run',
                         RunStopButtonClass:'mini ui compact positive circular button RunStopButton',
@@ -47,7 +47,7 @@ var AppScreenViewer = React.createClass({
             });
         $('.Autoset')
             .on('click', function(event) {
-                dsoCtrl.Autoset();
+                dsoCtrl.autoset();
                 self.setState({
                     RunStopState:'Run',
                     RunStopButtonClass:'mini ui compact positive circular button RunStopButton',
@@ -57,7 +57,7 @@ var AppScreenViewer = React.createClass({
             });
         $('.Single')
             .on('click', function(event) {
-                dsoCtrl.Single();
+                dsoCtrl.single();
                 self.setState({
                     RunStopState:'Stop',
                     RunStopButtonClass:'mini ui compact negative circular button RunStopButton',

@@ -6,7 +6,7 @@ var AppScreenViewer   = require('./AppScreenView.jsx');
 var AppFooter         = require('./AppFooter.jsx');
 
 var remote = electronRequire('remote');
-var dsoDriver=remote.require('./msoDriver/index.js');
+var dsoDriver=remote.require('./index.js');
 var dsoCtrl;
 var AppMainView = React.createClass({
 
