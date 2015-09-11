@@ -1,0 +1,708 @@
+{
+    "project": {},
+    "files": {
+        "msoDriver/index.js": {
+            "name": "msoDriver/index.js",
+            "modules": {
+                "instrument-com": 1
+            },
+            "classes": {
+                "dsoctrl": 1,
+                "dsoNet": 1,
+                "dsoUSB": 1
+            },
+            "fors": {},
+            "namespaces": {}
+        }
+    },
+    "modules": {
+        "instrument-com": {
+            "name": "instrument-com",
+            "submodules": {},
+            "elements": {},
+            "classes": {
+                "dsoctrl": 1,
+                "dsoNet": 1,
+                "dsoUSB": 1
+            },
+            "fors": {},
+            "namespaces": {},
+            "tag": "module",
+            "file": "msoDriver/index.js",
+            "line": 1587,
+            "description": "Module use to communicate with GWINSTEK's DSO through Ethernet or USB"
+        }
+    },
+    "classes": {
+        "dsoctrl": {
+            "name": "dsoctrl",
+            "shortname": "dsoctrl",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "instrument-com",
+            "namespace": "",
+            "file": "msoDriver/index.js",
+            "line": 963,
+            "description": "The class define all needed public properties and methods"
+        },
+        "dsoNet": {
+            "name": "dsoNet",
+            "shortname": "dsoNet",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "instrument-com",
+            "namespace": "",
+            "file": "msoDriver/index.js",
+            "line": 1569,
+            "description": "Create new instance that used to communicate with instrument through Ethernet",
+            "is_constructor": 1,
+            "extends": "dsoctrl",
+            "params": [
+                {
+                    "name": "port",
+                    "description": "Port number bind to TCP socket",
+                    "type": "String"
+                },
+                {
+                    "name": "host_addr",
+                    "description": "Ip address bind to TCP socket",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "Return dsoctrl object",
+                "type": "Object"
+            }
+        },
+        "dsoUSB": {
+            "name": "dsoUSB",
+            "shortname": "dsoUSB",
+            "classitems": [],
+            "plugins": [],
+            "extensions": [],
+            "plugin_for": [],
+            "extension_for": [],
+            "module": "instrument-com",
+            "namespace": "",
+            "file": "msoDriver/index.js",
+            "line": 1587,
+            "description": "Create new instance that used to communicate with instrument through USB",
+            "is_constructor": 1,
+            "extends": "dsoctrl",
+            "params": [
+                {
+                    "name": "vid",
+                    "description": "Vender ID bind to USB device",
+                    "type": "String"
+                },
+                {
+                    "name": "pid",
+                    "description": "Product ID bind to USB device",
+                    "type": "String"
+                }
+            ],
+            "return": {
+                "description": "Return dsoctrl object",
+                "type": "Object"
+            }
+        }
+    },
+    "elements": {},
+    "classitems": [
+        {
+            "file": "msoDriver/index.js",
+            "line": 920,
+            "description": "Create all needed private properties and method",
+            "access": "private",
+            "tagname": "",
+            "is_constructor": 1,
+            "return": {
+                "description": "Private method used to control DSO",
+                "type": "Object"
+            },
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 973,
+            "description": "The method belong to dsoctrl class used to connect to device,\nconnect method must be called and wait to complete before any dsoctrl method.",
+            "itemtype": "method",
+            "name": "connect",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "callback(e) Called when connection has been made",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 989,
+            "description": "The method belong to dsoctrl class used to load all properties from device,\nlike trigger type, channel state .. etc.",
+            "itemtype": "method",
+            "name": "reloadState",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "callback(e) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1023,
+            "description": "The method belong to dsoctrl class used to load horizontal properties from device,\nlike time division, position .. etc.",
+            "itemtype": "method",
+            "name": "getHorizontal",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "callback(e, horProperty) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1031,
+            "description": "Horizontal property of device.",
+            "itemtype": "property",
+            "name": "horProperty",
+            "class": "dsoctrl",
+            "module": "instrument-com",
+            "subprops": [
+                {
+                    "name": "position",
+                    "description": "Specify the distance with triggered pointer of the main window",
+                    "type": "String"
+                },
+                {
+                    "name": "zposition",
+                    "description": "Specify the distance with triggered pointer of the zoom window",
+                    "type": "String"
+                },
+                {
+                    "name": "scale",
+                    "description": "Specify the time divison of the main window",
+                    "type": "String"
+                },
+                {
+                    "name": "zscale",
+                    "description": "Specify the time divison of the zoom window",
+                    "type": "String"
+                },
+                {
+                    "name": "mode",
+                    "description": "Specify which mode device on",
+                    "type": "String"
+                },
+                {
+                    "name": "expand",
+                    "description": "Specify timebase expand by center or trigger position",
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1065,
+            "description": "The method belong to dsoctrl class used to load vertical properties from device,\nlike scale, position .. etc.",
+            "itemtype": "method",
+            "name": "getVertical",
+            "params": [
+                {
+                    "name": "ch",
+                    "description": "Specify which channel wants to be loaded",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "callback(e, chProperty) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1074,
+            "description": "Channel property of device.",
+            "itemtype": "property",
+            "name": "chProperty",
+            "class": "dsoctrl",
+            "module": "instrument-com",
+            "subprops": [
+                {
+                    "name": "coupling",
+                    "description": "Specify coupling on AC,DC or GND",
+                    "type": "String"
+                },
+                {
+                    "name": "impedance",
+                    "description": "Specify the impedance of the analog channel",
+                    "type": "String"
+                },
+                {
+                    "name": "invert",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "bandwidth",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "expand",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "state",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "position",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "deskew",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "rawdata",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "probe.unit",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "probe.atten",
+                    "description": "",
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1115,
+            "description": "The method belong to dsoctrl class used to get the current screen from device,",
+            "itemtype": "method",
+            "name": "getSnapshot",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "callback(e, dsipData) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1139,
+            "description": "The method belong to dsoctrl class used to get the data in acquisition memory for\nthe selected channel form device",
+            "itemtype": "method",
+            "name": "getRawdata",
+            "params": [
+                {
+                    "name": "ch",
+                    "description": "Specify which channel wants to be loaded",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "callback(e, rawData) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1182,
+            "description": "The method belong to dsoctrl class used to get the edge trigger properties from device",
+            "itemtype": "method",
+            "name": "getEdgeTrig",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "callback(e, trigProperty) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1189,
+            "description": "Trigger property of device.",
+            "itemtype": "property",
+            "name": "trigProperty",
+            "class": "dsoctrl",
+            "module": "instrument-com",
+            "subprops": [
+                {
+                    "name": "type",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "source",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "mode",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "holdoff",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "noise_rej",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "reject",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "level",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "alt",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "state",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "edge.coupling",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "edge.slop",
+                    "description": "",
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1233,
+            "description": "The method belong to dsoctrl class used to get the measurment properties\nfor the selected measure channel from device",
+            "itemtype": "method",
+            "name": "getMeas",
+            "params": [
+                {
+                    "name": "mCh",
+                    "description": "Specify which measure channel wants to be loaded",
+                    "type": "String"
+                },
+                {
+                    "name": "callback",
+                    "description": "callback(e, measProperty) Called when finished loading",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1242,
+            "description": "Measurement property of device.",
+            "itemtype": "property",
+            "name": "measProperty",
+            "class": "dsoctrl",
+            "module": "instrument-com",
+            "subprops": [
+                {
+                    "name": "stdValue",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "minValue",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "meanValue",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "value",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "state",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "source1",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "source2",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "type",
+                    "description": "",
+                    "type": "String"
+                },
+                {
+                    "name": "state",
+                    "description": "",
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1289,
+            "description": "The method belong to dsoctrl class used to get the measurment type\nof device supported",
+            "itemtype": "method",
+            "name": "supportedMeasType",
+            "params": [
+                {
+                    "name": "measureType",
+                    "description": "",
+                    "type": "Array"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1304,
+            "description": "The method belong to dsoctrl class used to setup a periodical measure channel with specify measure type\nand source channel",
+            "itemtype": "method",
+            "name": "setMeas",
+            "params": [
+                {
+                    "name": "measConf",
+                    "description": "Config to setup a measure channel",
+                    "type": "Object"
+                },
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1314,
+            "description": "Object used to setup a measure channel",
+            "itemtype": "property",
+            "name": "measConf",
+            "type": "Object",
+            "class": "dsoctrl",
+            "module": "instrument-com",
+            "subprops": [
+                {
+                    "name": "src1",
+                    "description": "Specify first source channel for measurement",
+                    "type": "String"
+                },
+                {
+                    "name": "src2",
+                    "description": "Specify second source channel for delay measure type",
+                    "type": "String"
+                },
+                {
+                    "name": "type",
+                    "description": "Specify measure type",
+                    "type": "String"
+                }
+            ]
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1363,
+            "description": "The method belong to dsoctrl class used to turn on statistics for all measure channels",
+            "itemtype": "method",
+            "name": "statisticOn",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1388,
+            "description": "The method belong to dsoctrl class used to turn off statistics for all measure channels",
+            "itemtype": "method",
+            "name": "statisticOff",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1413,
+            "description": "The method belong to dsoctrl class used to set the statistic weight all measure channels",
+            "itemtype": "method",
+            "name": "statisticWeight",
+            "params": [
+                {
+                    "name": "weight",
+                    "description": "Specify statistic weight",
+                    "type": "Number"
+                },
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1439,
+            "description": "The method belong to dsoctrl class used to set the device into run state",
+            "itemtype": "method",
+            "name": "run",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1465,
+            "description": "The method belong to dsoctrl class used to set the device into stop state",
+            "itemtype": "method",
+            "name": "stop",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1490,
+            "description": "The method belong to dsoctrl class used to set the device into single state",
+            "itemtype": "method",
+            "name": "single",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1515,
+            "description": "The method belong to dsoctrl class used to set the device into autoset state",
+            "itemtype": "method",
+            "name": "Autoset",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        },
+        {
+            "file": "msoDriver/index.js",
+            "line": 1539,
+            "description": "The method belong to dsoctrl class used to set the device into force trigger state",
+            "itemtype": "method",
+            "name": "force",
+            "params": [
+                {
+                    "name": "callback",
+                    "description": "Called when finished setting",
+                    "type": "Function"
+                }
+            ],
+            "class": "dsoctrl",
+            "module": "instrument-com"
+        }
+    ],
+    "warnings": [
+        {
+            "message": "Missing item type\nCreate all needed private properties and method",
+            "line": " msoDriver/index.js:920"
+        }
+    ]
+}

@@ -10,6 +10,7 @@ var async   = require('async');
 var uitl    = require('util');
 var events  = require('events');
 var path    = require('path');
+var Promise = require('es6-promise').Promise;
 
 var debug = require('debug');
 var log = debug('index:log');
@@ -836,14 +837,26 @@ Dso.prototype.tcpConnect = function(Callback) {
                       //   Callback();
                 });
 
-            this.net.socket.on('close', function(e) {
-            log('onTcpConnect: close!');
-            self.state.conn = 'disconnect';
-            err_string = e.message;
-            //dsoObj.net.socket.destroy();
-        });
+    this.net.socket.on('close', function(e) {
+        log('onTcpConnect: close!');
+        self.state.conn = 'disconnect';
+        err_string = e.message;
+        //dsoObj.net.socket.destroy();
+    });
 };
+Dso.prototype.tcpDisconnect = function(Callback) {
+    var self = this;
 
+    this.net.socket.removeAllListeners('close');
+    this.net.socket.on('close', function(e) {
+        log('onTcpConnect: close!');
+        self.state.conn = 'disconnect';
+        if(Callback){
+            Callback();
+        }
+    });
+    this.net.socket.end();
+};
 Dso.prototype.usbConnect = function(Callback) {
     var err_string;
     var self = this;
@@ -852,6 +865,15 @@ Dso.prototype.usbConnect = function(Callback) {
             // log(self.usb);
             // self.usb.onData(self.dataHandler);
             checkDsoExist(self, Callback);
+    });
+};
+Dso.prototype.usbDisconnect = function(Callback) {
+    var self = this;
+
+    usbDev.closeUsb(this, function() {
+        self.state.conn='disconnected';
+        self.usb.device=null;
+        self.interf='empty';
     });
 };
 Dso.prototype.cmd_write = function(cmdSequence) {
@@ -886,13 +908,16 @@ Dso.prototype.cmd_write = function(cmdSequence) {
     for (var i = 0, len = this.cmdSequence.length; i < len; i++) {
         cmd[i] = this.cmdSequence.shift();
 
-        if (cmd[i].cb !== null){// avoid missing async callback
+        // avoid missing async callback, flush command buffer when find cb exist
+        if (cmd[i].cb !== null){
             cb = cmd[i].cb;
+            if(i < len-1 ){
                 this.writeTimeoutObj = setTimeout(function() {
                     log('cmd_write reissue');
                     self.writeTimeoutObj = null;
                     self.cmd_write(cmdSequence);
                 },100);
+            }
             break;
         }
     }
@@ -907,6 +932,7 @@ Dso.prototype.cmd_write = function(cmdSequence) {
             }
         },function(err, results) {
             self.asyncWrite = 'done';
+            self.state.conn = 'connected';
             log('async write done');
             if (cb)
                 cb(err);
@@ -971,6 +997,22 @@ var _DsoCtrl = function(dsoObj) {
     var dsoctrl = {};
 
 /**
+*   The method belong to dsoctrl class used to release device's resource.
+*
+*   @method closeDev
+*   @return {null} Return null
+*
+*/
+    dsoctrl.closeDev = (function() {
+        log('closeDev');
+        var self = this;
+
+        return new Promise(function(resolve, reject) {
+            dsoctrl.disconnect().then(resolve);
+        });
+    }).bind(dsoObj);
+
+/**
 *   The method belong to dsoctrl class used to connect to device,
 *   connect method must be called and wait to complete before any dsoctrl method.
 *
@@ -978,46 +1020,93 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback  callback(e) Called when connection has been made
 *
 */
-    dsoctrl.connect = (function(callback) {
-        if (this.interf === 'usb') {
-            this.usbConnect(callback);
-        }else if (this.interf === 'net') {
-            this.tcpConnect(callback);
-        }
+    dsoctrl.connect = (function() {
+        var self = this;
+
+        return new Promise(function(resolve, reject) {
+            function conn(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    resolve();
+                }
+
+            };
+
+            if (self.interf === 'usb') {
+                self.usbConnect(conn);
+            }else if (self.interf === 'net') {
+                self.tcpConnect(conn);
+            }
+            else{
+                reject(Error('Not supported interface'));
+            }
+        });
+    }).bind(dsoObj);
+/**
+*   The method belong to dsoctrl class used to disconnect from device.
+*
+*   @method disconnect
+*   @param {Function} callback  callback(e) Called when connection has been made
+*
+*/
+    dsoctrl.disconnect = (function() {
+        log('disconnect');
+        var self = this;
+
+        return new Promise(function(resolve, reject) {
+
+            if(self.state.conn!=='disconnected'){
+                if(self.writeTimeoutObj!==null){
+                    clearTimeout(self.writeTimeoutObj);
+                }
+                if (self.interf === 'usb') {
+                    self.usbDisconnect(resolve);
+                }else if (self.interf === 'net') {
+                    self.tcpDisconnect(resolve);
+                }
+            }else{
+                resolve();
+            }
+        });
     }).bind(dsoObj);
 
 /**
 *   The method belong to dsoctrl class used to load all properties from device,
 *   like trigger type, channel state .. etc.
 *
-*   @method reloadState
+*   @method syncConfig
 *   @param {Function} callback callback(e) Called when finished loading
 *
 */
-    dsoctrl.reloadState = (function(callback) {
+    dsoctrl.syncConfig = (function() {
         var chCmd = [];
         var self = this;
-        function reload(e) {
-            if (e) {
-                if(callback) callback('error');
-            }else {
-                chCmd[chCmd.length-1].cb = reload;
-                if(callback) callback(null);
-            }
-        };
-        // this.reloadState(callback)
-        this.cmdSequence = this.cmdSequence.concat(acqLoadCmd);
-        this.cmdSequence = this.cmdSequence.concat(trigLoadCmd);
-        this.cmdSequence = this.cmdSequence.concat(horLoadCmd);
-        for(var i = 0; i < this.maxChNum; i++) {
-            chCmd = chanLoadCmd[i].slice(0);
-            this.cmdSequence = this.cmdSequence.concat(chCmd);
-        }
-        chCmd[chCmd.length-1].cb = reload;
-        // this.cmdSequence[this.cmdSequence.length-1].cb = reload;
-        // log(this.cmdSequence);
-        this.emit('cmd_write', this.cmdSequence);
 
+        return new Promise(function(resolve, reject) {
+            function reload(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    chCmd[chCmd.length-1].cb = reload;
+                    resolve();
+                }
+
+            };
+            self.cmdSequence = self.cmdSequence.concat(acqLoadCmd);
+            self.cmdSequence = self.cmdSequence.concat(trigLoadCmd);
+            self.cmdSequence = self.cmdSequence.concat(horLoadCmd);
+            for(var i = 0; i < self.maxChNum; i++) {
+                chCmd = chanLoadCmd[i].slice(0);
+                self.cmdSequence = self.cmdSequence.concat(chCmd);
+            }
+            chCmd[chCmd.length-1].cb = reload;
+            // self.cmdSequence[self.cmdSequence.length-1].cb = reload;
+            // log(self.cmdSequence);
+            self.emit('cmd_write', self.cmdSequence);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1040,27 +1129,32 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} mode Specify which mode device on
 *   @param {String} expand Specify timebase expand by center or trigger position
 */
-    dsoctrl.getHorizontal = (function(callback) {
+    dsoctrl.getHorizontal = (function() {
         // this.GetSnapshot(callback);
         var self = this;
-        function rawData(e) {
-            if (e){
-                if (callback) callback('error');
-            }else {
-                if (callback) callback(null, self.hor);
-            }
-        };
-        var cmd = [
-                {id:'hor',prop:'HorPosition',arg:'',cb:null,method:'get'},
-                {id:'hor',prop:'HorScale',arg:'',cb:null,method:'get'},
-                {id:'hor',prop:'HorMode',arg:'',cb:null,method:'get'},
-                {id:'hor',prop:'HorExpand',arg:'',cb:null,method:'get'},
-                {id:'hor',prop:'HorZoomPosition',arg:'',cb:null,method:'get'},
-                {id:'hor',prop:'HorZoomScale',arg:'',cb:rawData,method:'get'}
-            ];
-        this.cmdSequence = this.cmdSequence.concat(cmd);
-        // log(this.cmdSequence);
-        this.emit('cmd_write', cmd);
+
+        return new Promise(function(resolve, reject) {
+            function rawData(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    resolve(self.hor);
+                }
+
+            };
+            var cmd = [
+                    {id:'hor',prop:'HorPosition',arg:'',cb:null,method:'get'},
+                    {id:'hor',prop:'HorScale',arg:'',cb:null,method:'get'},
+                    {id:'hor',prop:'HorMode',arg:'',cb:null,method:'get'},
+                    {id:'hor',prop:'HorExpand',arg:'',cb:null,method:'get'},
+                    {id:'hor',prop:'HorZoomPosition',arg:'',cb:null,method:'get'},
+                    {id:'hor',prop:'HorZoomScale',arg:'',cb:rawData,method:'get'}
+                ];
+            self.cmdSequence = self.cmdSequence.concat(cmd);
+            // log(self.cmdSequence);
+            self.emit('cmd_write', cmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1089,29 +1183,33 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} probe.unit
 *   @param {String} probe.atten
 */
-    dsoctrl.getVertical = (function(ch, callback) {
+    dsoctrl.getVertical = (function(ch) {
         // this.GetSnapshot(callback);
         var self = this;
         var chNum = sytConstant.chID[ch];
         var chCmd;
-        function vetical(e) {
-            if (e) {
-                if (callback) callback('error');
-            }else {
-                chCmd[chCmd.length-1].cb = null;
-                if (callback) callback(null, self[ch]);
-            }
-        };
 
-        if(chNum < this.maxChNum) {
-            chCmd = chanLoadCmd[chNum].slice(0);
-            chCmd[chCmd.length-1].cb = vetical;
-            this.cmdSequence = this.cmdSequence.concat(chCmd);
-            // this.cmdSequence[this.cmdSequence.length-1].cb = vetical;
-            // log(chanLoadCmd[chNum]);
-            // log('----------------------------');
-            this.emit('cmd_write', this.cmdSequence);
-        }
+        return new Promise(function(resolve, reject) {
+            function vetical(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    chCmd[chCmd.length-1].cb = null;
+                    resolve(self[ch]);
+                }
+
+            };
+            if(chNum < this.maxChNum) {
+                chCmd = chanLoadCmd[chNum].slice(0);
+                chCmd[chCmd.length-1].cb = vetical;
+                self.cmdSequence = self.cmdSequence.concat(chCmd);
+                // self.cmdSequence[self.cmdSequence.length-1].cb = vetical;
+                // log(chanLoadCmd[chNum]);
+                // log('----------------------------');
+                self.emit('cmd_write', self.cmdSequence);
+            }
+        });
     }).bind(dsoObj);
 
 /**
@@ -1121,21 +1219,27 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback callback(e, dsipData) Called when finished loading
 *
 */
-    dsoctrl.getSnapshot = (function(callback) {
+    dsoctrl.getSnapshot = (function() {
         // this.GetSnapshot(callback);
         var self = this;
-        function snapshot(e) {
-            if (e) {
-                if (callback) callback('error');
-            }else {
-                if (callback) callback(null, self.sys.dispData);
-            }
-        };
-        var cmd = [
-                {id:'sys',prop:'DispOut',arg:'OFF',cb:snapshot,method:'get'}
-            ];
-        this.cmdSequence = this.cmdSequence.concat(cmd);
-        this.emit('cmd_write', cmd);
+
+
+        return new Promise(function(resolve, reject) {
+            function snapshot(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    resolve(self.sys.dispData);
+                }
+
+            };
+            var cmd = [
+                    {id:'sys',prop:'DispOut',arg:'OFF',cb:snapshot,method:'get'}
+                ];
+            self.cmdSequence = self.cmdSequence.concat(cmd);
+            self.emit('cmd_write', cmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1147,34 +1251,36 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback callback(e, rawData) Called when finished loading
 *
 */
-    dsoctrl.getRawdata = (function(ch, callback) {
+    dsoctrl.getRawdata = (function(ch) {
         // this.GetRawdata(ch,callback);
         var self = this;
-        //log(sytConstant.chID[ch]);
-        function rawData(e) {
-            if (e){
-                if (callback) callback('error');
+
+        return new Promise(function(resolve, reject) {
+            function rawData(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    resolve(self[ch].rawdata);
+                }
+
+            };
+            if(sytConstant.chID[ch] !== undefined){
+                var cmd=[
+                        {id:'acq',prop:'AcqHeader',arg:'OFF',cb:null,method:'set'},
+                        {id:ch,prop:'AcqMemory',arg:'',cb:rawData,method:'get'}
+                    ];
+                self.cmdSequence = self.cmdSequence.concat(cmd);
+                self.emit('cmd_write', cmd);
 
             }else {
-                if (callback) callback(null, self[ch].rawdata);
+                reject(Error("error"));
             }
-
-        };
-
-        if(sytConstant.chID[ch] !== undefined){
-            var cmd=[
-                    {id:'acq',prop:'AcqHeader',arg:'OFF',cb:null,method:'set'},
-                    {id:ch,prop:'AcqMemory',arg:'',cb:rawData,method:'get'}
-                ];
-            this.cmdSequence = this.cmdSequence.concat(cmd);
-            this.emit('cmd_write', cmd);
-
-        }else {
-            if (callback) callback('error');
-        }
-        return this;
-
+        });
     }).bind(dsoObj);
+
+
+
 
     ////////////////////////////
     dsoctrl.onError = (function(callback) {
@@ -1205,31 +1311,34 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} edge.coupling
 *   @param {String} edge.slop
 */
-    dsoctrl.getEdgeTrig = (function(callback) {
+    dsoctrl.getEdgeTrig = (function() {
         var self = this;
-        function edgeTrig(e) {
-            if (e) {
-                if (callback) callback('error');
 
-            }else {
-                if (callback) callback(null, self.trig);
-            }
+        return new Promise(function(resolve, reject) {
+            function edgeTrig(e){
+                if (e) {
+                    reject(Error("error"));
 
-        };
-        var trigCmd = [
-                {id:'trig',prop:'TrigType',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigSource',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigHighLevel',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigEdgeSlop',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigCouple',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigNoiseRej',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigMode',arg:'',cb:null,method:'get'},
-                {id:'trig',prop:'TrigHoldoff',arg:'',cb:edgeTrig,method:'get'}
-            ];
-        // this.GetRawdata(ch,callback);
+                }else {
+                    resolve(self.trig);
+                }
 
-        this.cmdSequence = this.cmdSequence.concat(trigCmd);
-        this.emit('cmd_write', trigCmd);
+            };
+            var trigCmd = [
+                    {id:'trig',prop:'TrigType',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigSource',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigHighLevel',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigEdgeSlop',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigCouple',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigNoiseRej',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigMode',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigHoldoff',arg:'',cb:edgeTrig,method:'get'}
+                ];
+            // this.GetRawdata(ch,callback);
+
+            self.cmdSequence = self.cmdSequence.concat(trigCmd);
+            self.emit('cmd_write', trigCmd);
+        });
     }).bind(dsoObj);
 
 
@@ -1258,36 +1367,40 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} state
 */
 
-    dsoctrl.getMeas = (function(mCh, callback) {
+    dsoctrl.getMeas = (function(mCh) {
         var self = this;
-        function measCmd(e) {
-            if (e) {
-                if(callback) callback('error');
 
-            }else {
-                if (callback) callback(null, self[mCh]);
+        return new Promise(function(resolve, reject) {
+            function measCmd(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    resolve(self[mCh]);
+                }
+
+            };
+            var measVal = [
+                    {id:mCh, prop:'MeasureState', arg:'', cb:null, method:'get'},
+                    // {id:'sys',prop:'StatisticMode',arg:'',cb:null,method:'get'},
+                    {id:mCh, prop:'MeasureValue', arg:'', cb:null, method:'get'},
+                    {id:mCh, prop:'MeasureSource1', arg:'', cb:null, method:'get'},
+                    {id:mCh, prop:'MeasureSource2', arg:'', cb:null, method:'get'},
+                    {id:mCh, prop:'MeasureType', arg:'', cb:measCmd, method:'get'}
+            ];
+            var measStd = [
+                    {id:mCh, prop:'MeasureStd', arg:'', cb:null, method:'get'},
+                    {id:mCh, prop:'MeasureMin', arg:'', cb:null, method:'get'},
+                    {id:mCh, prop:'MeasureMean', arg:'', cb:null, method:'get'},
+                    {id:mCh, prop:'MeasureMax', arg:'', cb:null, method:'get'}
+            ];
+
+            if(self.sys.staMode === 'ON'){
+                self.cmdSequence = self.cmdSequence.concat(measStd);
             }
-        };
-        var measVal = [
-                {id:mCh,prop:'MeasureState',arg:'',cb:null,method:'get'},
-                // {id:'sys',prop:'StatisticMode',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureValue',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureSource1',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureSource2',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureType',arg:'',cb:measCmd,method:'get'}
-            ];
-        var measStd = [
-                {id:mCh,prop:'MeasureStd',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureMin',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureMean',arg:'',cb:null,method:'get'},
-                {id:mCh,prop:'MeasureMax',arg:'',cb:null,method:'get'}
-            ];
-
-        if(this.sys.staMode === 'ON'){
-            this.cmdSequence = this.cmdSequence.concat(measStd);
-        }
-        this.cmdSequence = this.cmdSequence.concat(measVal);
-        this.emit('cmd_write', measCmd);
+            self.cmdSequence = self.cmdSequence.concat(measVal);
+            self.emit('cmd_write', measCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1298,11 +1411,14 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Array} measureType
 *
 */
-    dsoctrl.supportedMeasType = (function(callback) {
+    dsoctrl.supportedMeasType = (function() {
         var self = this;
 
-        log(this.commandObj[this.gdsType].MeasureType.parameter);
-        return this.commandObj[this.gdsType].MeasureType.parameter;
+        return new Promise(function(resolve, reject) {
+            log(self.commandObj[self.gdsType].MeasureType.parameter);
+            resolve(self.commandObj[self.gdsType].MeasureType.parameter);
+        });
+
     }).bind(dsoObj);
 
 /**
@@ -1325,43 +1441,42 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} src2 Specify second source channel for delay measure type
 *   @param {String} type Specify measure type
 */
-    dsoctrl.setMeas = (function(conf,callback) {
+    dsoctrl.setMeas = (function(conf) {
         var self = this;
-        function measCmd(e){
-            if (e) {
-                if (callback) {
-                    log(e);
-                    callback('error');
+
+        return new Promise(function(resolve, reject) {
+            function measCmd(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    resolve();
                 }
 
-            }else {
-                if (callback) callback();
+            };
+            var measSet = [
+                    {id:conf.ch,prop:'MeasureState',arg:'ON',cb:null,method:'set'},
+                    {id:conf.ch,prop:'MeasureSource1',arg:conf.src1.toUpperCase(),cb:null,method:'set'}
+                ],
+                measSrc2 = [
+                    {id:conf.ch,prop:'MeasureSource2',arg:conf.src2.toUpperCase(),cb:null,method:'set'}
+                ],
+                measType = [
+                    {id:conf.ch,prop:'MeasureType',arg:conf.type,cb:measCmd,method:'set'}
+                ];
+            if (conf.type === undefined) {
+                meascmd('error');
+                return;
             }
 
-        };
-        var measSet = [
-                {id:conf.ch,prop:'MeasureState',arg:'ON',cb:null,method:'set'},
-                {id:conf.ch,prop:'MeasureSource1',arg:conf.src1.toUpperCase(),cb:null,method:'set'}
-            ],
-            measSrc2 = [
-                {id:conf.ch,prop:'MeasureSource2',arg:conf.src2.toUpperCase(),cb:null,method:'set'}
-            ],
-            measType = [
-                {id:conf.ch,prop:'MeasureType',arg:conf.type,cb:measCmd,method:'set'}
-            ];
-        // this.GetRawdata(ch,callback);
-        if (conf.type === undefined) {
-            meascmd('error');
-            return;
-        }
+            if (conf.src2 !== undefined) {
+                self.cmdSequence=self.cmdSequence.concat(measSrc2);
+            }
 
-        if (conf.src2 !== undefined) {
-            this.cmdSequence=this.cmdSequence.concat(measSrc2);
-        }
-
-        this.cmdSequence = this.cmdSequence.concat(measSet);
-        this.cmdSequence = this.cmdSequence.concat(measType);
-        this.emit('cmd_write', measSet);
+            self.cmdSequence = self.cmdSequence.concat(measSet);
+            self.cmdSequence = self.cmdSequence.concat(measType);
+            self.emit('cmd_write', measSet);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1371,22 +1486,26 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback Called when finished setting
 *
 */
-    dsoctrl.statisticOn = (function(callback) {
+    dsoctrl.statisticOn = (function() {
         var self = this;
-        function measCmd(e) {
-            if (e) {
-                if (callback) callback('error');
 
-            }else {
-                if (callback) callback(null);
-            }
-        };
-        var measCmd = [
-            {id:'sys',prop:'StatisticMode',arg:'ON',cb:measCmd,method:'set'}
-        ];
+        return new Promise(function(resolve, reject) {
+            function measCmd(e){
+                if (e) {
+                    reject(Error("error"));
 
-        this.cmdSequence = this.cmdSequence.concat(measCmd);
-        this.emit('cmd_write', measCmd);
+                }else {
+                    resolve();
+                }
+
+            };
+            var measCmd = [
+                {id:'sys',prop:'StatisticMode',arg:'ON',cb:measCmd,method:'set'}
+            ];
+
+            self.cmdSequence = self.cmdSequence.concat(measCmd);
+            self.emit('cmd_write', measCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1396,22 +1515,25 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback Called when finished setting
 *
 */
-    dsoctrl.statisticOff = (function(callback) {
+    dsoctrl.statisticOff = (function() {
         var self = this;
-        function statistic(e) {
-            if (e) {
-                if (callback) callback('error');
-            }else {
-                if (callback) callback(null);
-            }
+        return new Promise(function(resolve, reject) {
+            function statistic(e){
+                if (e) {
+                    reject(Error("error"));
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'StatisticMode',arg:'OFF',cb:statistic,method:'set'}
-        ];
+                }else {
+                    resolve();
+                }
 
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+            };
+            var sysCmd = [
+                {id:'sys',prop:'StatisticMode',arg:'OFF',cb:statistic,method:'set'}
+            ];
+
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1422,22 +1544,25 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback Called when finished setting
 *
 */
-    dsoctrl.statisticWeight = (function(weight,callback) {
+    dsoctrl.statisticWeight = (function(weight) {
         var self = this;
-        function statistic(e) {
-            if (e) {
-                if (callback) callback('error');
-            }else {
-                if (callback) callback(null);
-            }
+        return new Promise(function(resolve, reject) {
+            function statistic(e){
+                if (e) {
+                    reject(Error("error"));
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'StatisticStaWeight',arg:weight,cb:statistic,method:'set'}
-        ];
+                }else {
+                    resolve();
+                }
 
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+            };
+            var sysCmd = [
+                {id:'sys',prop:'StatisticStaWeight',arg:weight,cb:statistic,method:'set'}
+            ];
+
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1447,23 +1572,25 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {Function} callback Called when finished setting
 *
 */
-    dsoctrl.run = (function(callback){
+    dsoctrl.run = (function(){
         var self = this;
-        function sysRun(e){
-            if (e) {
-                if (callback) callback('error');
+        return new Promise(function(resolve, reject) {
+            function sysRun(e){
+                if (e) {
+                    reject(Error("error"));
 
-            }else {
-                if (callback) callback(null);
-            }
+                }else {
+                    resolve();
+                }
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'RUN',arg:'',cb:sysRun,method:'set'}
-        ];
+            };
+            var sysCmd = [
+                {id:'sys',prop:'RUN',arg:'',cb:sysRun,method:'set'}
+            ];
 
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1472,23 +1599,25 @@ var _DsoCtrl = function(dsoObj) {
 *   @method stop
 *   @param {Function} callback Called when finished setting
 */
-    dsoctrl.stop = (function(callback) {
+    dsoctrl.stop = (function() {
         var self = this;
-        function sysStop(e) {
-            if (e) {
-                if (callback) callback('error');
+        return new Promise(function(resolve, reject) {
+            function sysStop(e){
+                if (e) {
+                    reject(Error("error"));
 
-            }else {
-                if (callback) callback(null);
-            }
+                }else {
+                    resolve();
+                }
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'STOP',arg:'',cb:sysStop,method:'set'}
-        ];
-        log('set dos stop');
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+            };
+            var sysCmd = [
+                {id:'sys',prop:'STOP',arg:'',cb:sysStop,method:'set'}
+            ];
+            log('set dos stop');
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1497,23 +1626,26 @@ var _DsoCtrl = function(dsoObj) {
 *   @method single
 *   @param {Function} callback Called when finished setting
 */
-    dsoctrl.single = (function(callback) {
+    dsoctrl.single = (function() {
         var self = this;
-        function sysSingle(e) {
-            if (e){
-                if (callback) callback('error');
 
-            }else {
-                if(callback) callback(null);
-            }
+        return new Promise(function(resolve, reject) {
+            function sysSingle(e){
+                if (e) {
+                    reject(Error("error"));
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'SINGLE',arg:'',cb:sysSingle,method:'set'}
-        ];
+                }else {
+                    resolve();
+                }
 
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+            };
+            var sysCmd = [
+                {id:'sys',prop:'SINGLE',arg:'',cb:sysSingle,method:'set'}
+            ];
+
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1522,22 +1654,26 @@ var _DsoCtrl = function(dsoObj) {
 *   @method Autoset
 *   @param {Function} callback Called when finished setting
 */
-    dsoctrl.autoset = (function(callback){
+    dsoctrl.autoset = (function(){
         var self = this;
-        function sysAutoset(e){
-            if (e) {
-                if (callback) callback('error');
-            }else {
-                if (callback) callback(null);
-            }
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'AUTOSET',arg:'',cb:sysAutoset,method:'set'}
-        ];
+        return new Promise(function(resolve, reject) {
+            function sysAutoset(e){
+                if (e) {
+                    reject(Error("error"));
 
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+                }else {
+                    resolve();
+                }
+
+            };
+            var sysCmd = [
+                {id:'sys',prop:'AUTOSET',arg:'',cb:sysAutoset,method:'set'}
+            ];
+
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 /**
@@ -1546,23 +1682,26 @@ var _DsoCtrl = function(dsoObj) {
 *   @method force
 *   @param {Function} callback Called when finished setting
 */
-    dsoctrl.force = (function(callback) {
+    dsoctrl.force = (function() {
         var self = this;
-        function sysForce(e){
-            if (e) {
-                if (callback) callback('error');
 
-            }else {
-                if (callback) callback(null);
-            }
+        return new Promise(function(resolve, reject) {
+            function sysForce(e){
+                if (e) {
+                    reject(Error("error"));
 
-        };
-        var sysCmd = [
-            {id:'sys',prop:'FORCE',arg:'',cb:sysForce,method:'set'}
-        ];
+                }else {
+                    resolve();
+                }
 
-        this.cmdSequence = this.cmdSequence.concat(sysCmd);
-        this.emit('cmd_write', sysCmd);
+            };
+            var sysCmd = [
+                {id:'sys',prop:'FORCE',arg:'',cb:sysForce,method:'set'}
+            ];
+
+            self.cmdSequence = self.cmdSequence.concat(sysCmd);
+            self.emit('cmd_write', sysCmd);
+        });
     }).bind(dsoObj);
 
 
@@ -1582,10 +1721,18 @@ var _DsoCtrl = function(dsoObj) {
 *   @return {Object} Return dsoctrl object
 */
 exports.DsoNet  = function(port, host_addr) {
-    var dsoObj = _DsoObj();
-        BindNetObj(dsoObj, port, host_addr);
+    // return new Promise(function(resolve, reject) {
+    //     var dsoObj = _DsoObj();
+    //     BindNetObj(dsoObj, port, host_addr);
+    //     resolve(_DsoCtrl(dsoObj));
+    // });
 
+    var dsoObj = _DsoObj();
+    BindNetObj(dsoObj, port, host_addr);
+    // this = _DsoCtrl(dsoObj);
+    // return this;
     return _DsoCtrl(dsoObj);
+
 };
 
 /**
@@ -1600,10 +1747,18 @@ exports.DsoNet  = function(port, host_addr) {
 *   @return {Object} Return dsoctrl object
 */
 exports.DsoUSB  = function(vid,pid) {
+    // return new Promise(function(resolve, reject) {
+    //     var dsoObj = _DsoObj();
+    //     usbDev.BindUsbObj(dsoObj, vid, pid);
+    //     resolve(_DsoCtrl(dsoObj));
+    // });
+
 
     var dsoObj = _DsoObj();
-        usbDev.BindUsbObj(dsoObj, vid, pid);
+    usbDev.BindUsbObj(dsoObj, vid, pid);
+    // this = _DsoCtrl(dsoObj);
 
+    // return this;
     return _DsoCtrl(dsoObj);
 };
 

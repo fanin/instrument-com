@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>msoDriver/index.js</title>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/3.9.1/build/cssgrids/cssgrids-min.css">
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="icon" href="../assets/favicon.ico">
+    <script src="http://yui.yahooapis.com/combo?3.9.1/build/yui/yui-min.js"></script>
+</head>
+<body class="yui3-skin-sam">
+
+<div id="doc">
+    <div id="hd" class="yui3-g header">
+        <div class="yui3-u-3-4">
+                <h1><img src="../assets/css/logo.png" title="" width="117" height="52"></h1>
+        </div>
+        <div class="yui3-u-1-4 version">
+            <em>API Docs for: </em>
+        </div>
+    </div>
+    <div id="bd" class="yui3-g">
+
+        <div class="yui3-u-1-4">
+            <div id="docs-sidebar" class="sidebar apidocs">
+                <div id="api-list">
+                    <h2 class="off-left">APIs</h2>
+                    <div id="api-tabview" class="tabview">
+                        <ul class="tabs">
+                            <li><a href="#api-classes">Classes</a></li>
+                            <li><a href="#api-modules">Modules</a></li>
+                        </ul>
+                
+                        <div id="api-tabview-filter">
+                            <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                        </div>
+                
+                        <div id="api-tabview-panel">
+                            <ul id="api-classes" class="apis classes">
+                                <li><a href="../classes/dsoctrl.html">dsoctrl</a></li>
+                                <li><a href="../classes/dsoNet.html">dsoNet</a></li>
+                                <li><a href="../classes/dsoUSB.html">dsoUSB</a></li>
+                            </ul>
+                
+                
+                            <ul id="api-modules" class="apis modules">
+                                <li><a href="../modules/instrument-com.html">instrument-com</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="yui3-u-3-4">
+                <div id="api-options">
+                    Show:
+                    <label for="api-show-inherited">
+                        <input type="checkbox" id="api-show-inherited" checked>
+                        Inherited
+                    </label>
+            
+                    <label for="api-show-protected">
+                        <input type="checkbox" id="api-show-protected">
+                        Protected
+                    </label>
+            
+                    <label for="api-show-private">
+                        <input type="checkbox" id="api-show-private">
+                        Private
+                    </label>
+                    <label for="api-show-deprecated">
+                        <input type="checkbox" id="api-show-deprecated">
+                        Deprecated
+                    </label>
+            
+                </div>
+            
+            <div class="apidocs">
+                <div id="docs-main">
+                    <div class="content">
+<h1 class="file-heading">File: msoDriver/index.js</h1>
+
+<div class="file">
+    <pre class="code prettyprint linenums">
+&#x27;use strict&#x27;;
+/**
+*   Module use to communicate with GWINSTEK&#x27;s DSO through Ethernet or USB
+*
+*   @module instrument-com
+*/
+var net     = require(&#x27;net&#x27;);
+var fs      = require(&#x27;fs&#x27;);
+var async   = require(&#x27;async&#x27;);
+var uitl    = require(&#x27;util&#x27;);
+var events  = require(&#x27;events&#x27;);
+var path    = require(&#x27;path&#x27;);
+
+var debug = require(&#x27;debug&#x27;);
+var log = debug(&#x27;index:log&#x27;);
+var info = debug(&#x27;index:info&#x27;);
+var error = debug(&#x27;index:error&#x27;);
+var sytConstant=require(&#x27;./sysConstant.js&#x27;);
+var syscmd = require(&#x27;./system.js&#x27;);
+var trigcmd = require(&#x27;./trigger.js&#x27;);
+var acqcmd = require(&#x27;./acquire.js&#x27;);
+var horcmd = require(&#x27;./horizontal.js&#x27;);
+var mathcmd = require(&#x27;./math.js&#x27;);
+var meascmd = require(&#x27;./measure.js&#x27;);
+var channel = require(&#x27;./channel.js&#x27;);
+    // usbDev = require(&#x27;./devUsb.js&#x27;);
+var usbDev = require(&#x27;./devUsbFs.js&#x27;);
+var supportType = [&#x27;GDS2000E&#x27;];
+//
+
+var chanLoadCmd = [
+        [   {id:&#x27;ch1&#x27;,prop:&#x27;ChState&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;BWLimit&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;COUPling&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;VerSCALe&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;VerPOSition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;VerEXPand&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;INVert&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;PROBe_RATio&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;PROBe_Type&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch1&#x27;,prop:&#x27;DESKew&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+        ],[
+            {id:&#x27;ch2&#x27;,prop:&#x27;ChState&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;BWLimit&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;COUPling&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;VerSCALe&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;VerPOSition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;VerEXPand&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;INVert&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;PROBe_RATio&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;PROBe_Type&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch2&#x27;,prop:&#x27;DESKew&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+        ],[
+            {id:&#x27;ch3&#x27;,prop:&#x27;BWLimit&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;COUPling&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;VerSCALe&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;VerPOSition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;VerEXPand&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;INVert&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;PROBe_RATio&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;PROBe_Type&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch3&#x27;,prop:&#x27;DESKew&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+        ],[
+            {id:&#x27;ch4&#x27;,prop:&#x27;ChState&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;BWLimit&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;COUPling&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;VerSCALe&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;VerPOSition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;VerEXPand&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;INVert&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;PROBe_RATio&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;PROBe_Type&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+            {id:&#x27;ch4&#x27;,prop:&#x27;DESKew&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+        ]
+    ];
+var trigLoadCmd = [
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigSource&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigHighLevel&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigLowLevel&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigEdgeSlop&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigCouple&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigNoiseRej&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigHoldoff&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigDelayType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigDelayEvent&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigDelayType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigDelaySlop&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigDelayLevel&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigDelayTime&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigPulseWidthPolarity&#x27;,arg:&#x27;NEGATIVE&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigPulseWidthWhen&#x27;,arg:&#x27;EQUAL&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigPulseWidthTime&#x27;,arg:&#x27;1E-1&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigRuntPolarity&#x27;,arg:&#x27;EITHER&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigRuntWhen&#x27;,arg:&#x27;UNEQUAL&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigRuntTime&#x27;,arg:&#x27;1E-1&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigRiseFallSlop&#x27;,arg:&#x27;EITHER&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigRiseFallWhen&#x27;,arg:&#x27;LESSTHAN&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigRiseFallTime&#x27;,arg:&#x27;1E-1&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigVideoType&#x27;,arg:&#x27;NTSC&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigVideoField&#x27;,arg:&#x27;FIELD2&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigVideoLine&#x27;,arg:&#x27;262&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigVideoPolarity&#x27;,arg:&#x27;NEGATIVE&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigALT&#x27;,arg:&#x27;OFF&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigExtProbeType&#x27;,arg:&#x27;CURRENT&#x27;},
+    // {id:&#x27;trig&#x27;,prop:&#x27;TrigExtProbeRatio&#x27;,arg:&#x27;1E+0&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigTimeoutTime&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;trig&#x27;,prop:&#x27;TrigTimeoutWhen&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+    ];
+var acqLoadCmd = [
+        {id:&#x27;acq&#x27;,prop:&#x27;AcqRecLength&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;acq&#x27;,prop:&#x27;AcqMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;acq&#x27;,prop:&#x27;AcqAverage&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+    ];
+var horLoadCmd = [
+        {id:&#x27;hor&#x27;,prop:&#x27;HorMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;hor&#x27;,prop:&#x27;HorScale&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;hor&#x27;,prop:&#x27;HorPosition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;hor&#x27;,prop:&#x27;HorExpand&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;hor&#x27;,prop:&#x27;HorMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;hor&#x27;,prop:&#x27;HorZoomScale&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;hor&#x27;,prop:&#x27;HorZoomPosition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+    ];
+var mathLoadCmd = [
+        {id:&#x27;math&#x27;,prop:&#x27;MathDisp&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathDualSour1&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathDualSour2&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathDualOper&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathDualScale&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathDualPos&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftWin&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftSource&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftMag&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftVerPos&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftVerScale&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftHorPos&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+        {id:&#x27;math&#x27;,prop:&#x27;MathFftHorScale&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+
+        // {id:&#x27;meas1&#x27;,prop:&#x27;MeasureState&#x27;,arg:&#x27;ON&#x27;},
+        // {id:&#x27;meas1&#x27;,prop:&#x27;StatisticMode&#x27;,arg:&#x27;ON&#x27;},
+        // //{id:&#x27;meas1&#x27;,prop:&#x27;StatisticReset&#x27;,arg:&#x27;&#x27;},
+        // {id:&#x27;meas1&#x27;,prop:&#x27;MeasureSource1&#x27;,arg:&#x27;CH1&#x27;},
+        // {id:&#x27;meas1&#x27;,prop:&#x27;MeasureSource2&#x27;,arg:&#x27;CH2&#x27;},
+        // {id:&#x27;meas1&#x27;,prop:&#x27;MeasureType&#x27;,arg:&#x27;PK2pk&#x27;},
+    ];
+var trigTestCmd = [
+        {prop:&#x27;TrigType&#x27;,arg:&#x27;EDGE&#x27;},
+        {prop:&#x27;TrigSource&#x27;,arg:&#x27;CH2&#x27;},
+        {prop:&#x27;TrigHighLevel&#x27;,arg:&#x27;1E-1&#x27;},
+        {prop:&#x27;TrigLowLevel&#x27;,arg:&#x27;2E-1&#x27;},
+        {prop:&#x27;TrigEdgeSlop&#x27;,arg:&#x27;RISE&#x27;},
+        {prop:&#x27;TrigCouple&#x27;,arg:&#x27;AC&#x27;},
+        {prop:&#x27;TrigNoiseRej&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;TrigMode&#x27;,arg:&#x27;NORMAL&#x27;},
+        {prop:&#x27;TrigHoldoff&#x27;,arg:&#x27;1E-1&#x27;},
+
+        {prop:&#x27;TrigType&#x27;,arg:&#x27;DELAY&#x27;},
+        {prop:&#x27;TrigDelayType&#x27;,arg:&#x27;EVENT&#x27;},
+        {prop:&#x27;TrigDelayEvent&#x27;,arg:&#x27;1100&#x27;},
+        {prop:&#x27;TrigDelayType&#x27;,arg:&#x27;TIME&#x27;},
+        {prop:&#x27;TrigDelaySlop&#x27;,arg:&#x27;FALL&#x27;},
+        {prop:&#x27;TrigDelayLevel&#x27;,arg:&#x27;1E-1&#x27;},
+        {prop:&#x27;TrigDelayTime&#x27;,arg:&#x27;1E-1&#x27;},
+
+        // {prop:&#x27;TrigPulseWidthPolarity&#x27;,arg:&#x27;NEGATIVE&#x27;},
+        // {prop:&#x27;TrigPulseWidthWhen&#x27;,arg:&#x27;EQUAL&#x27;},
+        // {prop:&#x27;TrigPulseWidthTime&#x27;,arg:&#x27;1E-1&#x27;},
+        // {prop:&#x27;TrigRuntPolarity&#x27;,arg:&#x27;EITHER&#x27;},
+        // {prop:&#x27;TrigRuntWhen&#x27;,arg:&#x27;UNEQUAL&#x27;},
+        // {prop:&#x27;TrigRuntTime&#x27;,arg:&#x27;1E-1&#x27;},
+        // {prop:&#x27;TrigRiseFallSlop&#x27;,arg:&#x27;EITHER&#x27;},
+        // {prop:&#x27;TrigRiseFallWhen&#x27;,arg:&#x27;LESSTHAN&#x27;},
+        // {prop:&#x27;TrigRiseFallTime&#x27;,arg:&#x27;1E-1&#x27;},
+        // {prop:&#x27;TrigVideoType&#x27;,arg:&#x27;NTSC&#x27;},
+        // {prop:&#x27;TrigVideoField&#x27;,arg:&#x27;FIELD2&#x27;},
+        // {prop:&#x27;TrigVideoLine&#x27;,arg:&#x27;262&#x27;},
+        // {prop:&#x27;TrigVideoPolarity&#x27;,arg:&#x27;NEGATIVE&#x27;},
+        // {prop:&#x27;TrigALT&#x27;,arg:&#x27;OFF&#x27;},
+        // {prop:&#x27;TrigExtProbeType&#x27;,arg:&#x27;CURRENT&#x27;},
+        // {prop:&#x27;TrigExtProbeRatio&#x27;,arg:&#x27;1E+0&#x27;},
+        {prop:&#x27;TrigType&#x27;,arg:&#x27;TIMEOUT&#x27;},
+        {prop:&#x27;TrigTimeoutTime&#x27;,arg:&#x27;1E+0&#x27;},
+        {prop:&#x27;TrigTimeoutWhen&#x27;,arg:&#x27;EITHER&#x27;}
+    ];
+var chTestCmd = [
+        {prop:&#x27;ChState&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;BWLimit&#x27;,arg:&#x27;2E+7&#x27;},
+        {prop:&#x27;COUPling&#x27;,arg:&#x27;AC&#x27;},
+        {prop:&#x27;VerSCALe&#x27;,arg:&#x27;2E-1&#x27;},
+        {prop:&#x27;VerPOSition&#x27;,arg:&#x27;2E-1&#x27;},
+        {prop:&#x27;VerEXPand&#x27;,arg:&#x27;CENTER&#x27;},
+        {prop:&#x27;INVert&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;PROBe_RATio&#x27;,arg:&#x27;1E+1&#x27;},
+        {prop:&#x27;PROBe_Type&#x27;,arg:&#x27;VOLTAGE&#x27;},
+        {prop:&#x27;DESKew&#x27;,arg:&#x27;0&#x27;}
+    ];
+var acqTestCmd = [
+        {prop:&#x27;AcqRecLength&#x27;,arg:&#x27;1E+5&#x27;},
+        {prop:&#x27;AcqMode&#x27;,arg:&#x27;AVERAGE&#x27;},
+        {prop:&#x27;AcqAverage&#x27;,arg:&#x27;16&#x27;}
+    ];
+var horTestCmd = [
+        {prop:&#x27;HorMode&#x27;,arg:&#x27;MAIN&#x27;},
+        {prop:&#x27;HorScale&#x27;,arg:&#x27;5E-5&#x27;},
+        {prop:&#x27;HorPosition&#x27;,arg:&#x27;5E-5&#x27;},
+        {prop:&#x27;HorExpand&#x27;,arg:&#x27;TRIGGER&#x27;},
+        {prop:&#x27;HorMode&#x27;,arg:&#x27;WINDOW&#x27;},
+        {prop:&#x27;HorZoomScale&#x27;,arg:&#x27;2E-5&#x27;},
+        {prop:&#x27;HorZoomPosition&#x27;,arg:&#x27;2E-5&#x27;}
+    ];
+var mathTestCmd = [
+        {prop:&#x27;MathDisp&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;MathType&#x27;,arg:&#x27;DUAL&#x27;},
+        {prop:&#x27;MathDualSour1&#x27;,arg:&#x27;CH2&#x27;},
+        {prop:&#x27;MathDualSour2&#x27;,arg:&#x27;CH1&#x27;},
+        {prop:&#x27;MathDualOper&#x27;,arg:&#x27;DIV&#x27;},
+        {prop:&#x27;MathDualScale&#x27;,arg:&#x27;1&#x27;},
+        {prop:&#x27;MathDualPos&#x27;,arg:&#x27;1&#x27;},
+        {prop:&#x27;MathType&#x27;,arg:&#x27;FFT&#x27;},
+        {prop:&#x27;MathFftWin&#x27;,arg:&#x27;HAMMING&#x27;},
+        {prop:&#x27;MathFftSource&#x27;,arg:&#x27;CH2&#x27;},
+        {prop:&#x27;MathFftMag&#x27;,arg:&#x27;DB&#x27;},
+        {prop:&#x27;MathFftVerPos&#x27;,arg:&#x27;1&#x27;},
+        {prop:&#x27;MathFftVerScale&#x27;,arg:&#x27;1&#x27;},
+        {prop:&#x27;MathFftHorPos&#x27;,arg:&#x27;1&#x27;},
+        {prop:&#x27;MathFftHorScale&#x27;,arg:&#x27;1&#x27;}
+    ];
+var measSetTestCmd = [
+        {prop:&#x27;MeasureState&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;StatisticMode&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;StatisticReset&#x27;,arg:&#x27;&#x27;},
+        {prop:&#x27;MeasureSource1&#x27;,arg:&#x27;CH1&#x27;},
+        {prop:&#x27;MeasureSource2&#x27;,arg:&#x27;CH2&#x27;},
+        {prop:&#x27;MeasureType&#x27;,arg:&#x27;PK2pk&#x27;}
+
+    ];
+var measGetTestCmd = [
+        {prop:&#x27;MeasureValue&#x27;,arg:&#x27;ON&#x27;},
+        {prop:&#x27;MeasureStd&#x27;,arg:&#x27;&#x27;},
+        {prop:&#x27;MeasureMin&#x27;,arg:&#x27;CH2&#x27;},
+        {prop:&#x27;MeasureMean&#x27;,arg:&#x27;CH1&#x27;},
+        {prop:&#x27;MeasureType&#x27;,arg:&#x27;PK2pk&#x27;},
+        {prop:&#x27;MeasureMax&#x27;,arg:&#x27;ON&#x27;}
+
+    ];
+var dispTestCmd = [
+        {prop:&#x27;DispOut&#x27;,arg:&#x27;&#x27;}
+    ];
+var sysTestCmd = [
+        {prop:&#x27;SysErr&#x27;,arg:&#x27;&#x27;}
+    ];
+
+
+
+function show_props(obj, objName) {
+    var obj_string = &#x27;&#x27;;
+
+    for (var i in obj) {
+        if (typeof obj[i] === &#x27;object&#x27;){
+            obj_string += show_props(obj[i],i.toString());
+        }else{
+            obj_string += objName + &#x27;.&#x27; + i + &#x27;=&#x27; + obj[i] + &#x27;\n&#x27;;
+        }
+    }
+
+    return obj_string;
+}
+
+function getIDN(dsoObj, data, cb) {
+    var id = data.toString().split(&#x27;,&#x27;);
+
+    dsoObj.gdsType = &#x27;&#x27;;
+    for (var j = 0; j &lt; supportType.length; j++) {
+        var gdsModel = dsoObj.commandObj[supportType[j]].model;
+        for (var i = 0; i &lt; gdsModel.length ; i++) {
+            log(&#x27;compare &#x27; + id[1] + &#x27;with &#x27; + gdsModel[i]);
+            if (id[1] === gdsModel[i]) {
+                dsoObj.gdsType = supportType[j];
+                dsoObj.gdsModel = id[1];
+                dsoObj.maxChNum = dsoObj.commandObj[supportType[j]].maxChNum[gdsModel[i]];
+                break;
+            }
+        }
+    }
+
+    log(&#x27;gdsType=&#x27; + dsoObj.gdsType);
+    log(&#x27;gdsModel=&#x27; + dsoObj.gdsModel);
+
+    //cb(null,data);
+    return true;
+}
+
+function getChInfo(dsoObj, data, cb) {
+        log(data);
+        cb(null, data);
+}
+
+function done(){
+    log(&#x27;------------------------- done&#x27;);
+}
+
+
+
+function testDsoCmd(dsoObj, callback) {
+    var tmp={};
+
+
+    async.series(
+        [
+            function(done) {
+                log(&#x27;write command to server&#x27;);
+                dsoObj.state.conn = &#x27;query&#x27;;
+                dsoObj.cmdHandler = getIDN;
+                dsoObj.handlerSelf = dsoObj;
+                dsoObj.syncCallback = done;
+                dsoObj.write(&#x27;*idn?\r\n&#x27;);
+                // dsoObj.net.socket.once(&#x27;data&#x27;,function(data){
+                //     getIDN(data,dsoObj,done);
+                // });
+
+            },
+            function(done) {
+                dsoObj.state.conn = &#x27;query&#x27;;
+                dsoObj.cmdHandler = getChInfo;
+                dsoObj.handlerSelf = dsoObj;
+                dsoObj.syncCallback = done;
+                dsoObj.write(&#x27;:CHANnel1:SCAle?\r\n&#x27;);
+                // dsoObj.net.socket.once(&#x27;data&#x27;,function(data){
+                //     getChInfo(data,dsoObj,done);
+                // });
+            },
+            // function(done){
+            //     async.eachSeries(chTestCmd,
+            //         function(item,done){
+            //             dsoObj.ch1.getProp(item.prop,item.arg,done);
+
+            //         },function(err,results){
+            //             log(&#x27;--------- Channel-1 Get Prop Test Cmd -------------&#x27;);
+            //             log(&#x27;err:&#x27;+err);
+            //             log(&#x27;results:&#x27;+results);
+            //             log(&#x27;--------------------------------------------&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     // dsoObj.ch2.getProp(&#x27;ChState&#x27;,tmp,done);
+            //     async.eachSeries(chTestCmd,
+            //         function(item,done){
+            //             dsoObj.ch2.setProp(item.prop,item.arg,done);
+
+            //         },function(err,results){
+            //             log(&#x27;--------- Channel-2 Set Prop Test Cmd -------------&#x27;);
+            //             log(&#x27;err:&#x27;+err);
+            //             log(&#x27;results:&#x27;+results);
+            //             log(&#x27;--------------------------------------------&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(sysTestCmd,
+            //         function(item,done){
+            //             dsoObj.sys.prop.get(item.prop,item.arg,done);
+            //         },function(err,results){
+            //             log(&#x27;*************** System Get Error After Channel Test Cmd ***************&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(acqTestCmd,
+            //         function(item,done){
+            //             dsoObj.acq.prop.set(item.prop,item.arg,done);
+
+            //         },function(err,results){
+            //             log(&#x27;--------- Acquire Set Prop Test Cmd -------------&#x27;);
+            //             log(&#x27;err:&#x27;+err);
+            //             log(&#x27;results:&#x27;+results);
+            //             log(&#x27;--------------------------------------------&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(sysTestCmd,
+            //         function(item,done){
+            //             dsoObj.sys.prop.get(item.prop,item.arg,done);
+            //         },function(err,results){
+            //             log(&#x27;*************** System Get Error After Acquire Test Cmd ***************&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(horTestCmd,
+            //         function(item,done){
+            //             dsoObj.hor.prop.set(item.prop,item.arg,done);
+
+            //         },function(err,results){
+            //             log(&#x27;--------- Horizontal Set Prop Test Cmd -------------&#x27;);
+            //             log(&#x27;err:&#x27;+err);
+            //             log(&#x27;results:&#x27;+results);
+            //             log(&#x27;--------------------------------------------&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(sysTestCmd,
+            //         function(item,done){
+            //             dsoObj.sys.prop.get(item.prop,item.arg,done);
+            //         },function(err,results){
+            //             log(&#x27;*************** System Get Error After Horizontal Test Cmd ***************&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(mathTestCmd,
+            //         function(item,done){
+            //             dsoObj.math.prop.set(item.prop,item.arg,done);
+
+            //         },function(err,results){
+            //             log(&#x27;--------- Math Set Prop Test Cmd -------------&#x27;);
+            //             log(&#x27;err:&#x27;+err);
+            //             log(&#x27;results:&#x27;+results);
+            //             log(&#x27;--------------------------------------------&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            // function(done){
+            //     async.eachSeries(sysTestCmd,
+            //         function(item,done){
+            //             dsoObj.sys.prop.get(item.prop,item.arg,done);
+            //         },function(err,results){
+            //             log(&#x27;*************** System Get Error After Horizontal Test Cmd ***************&#x27;);
+            //             done();
+            //         }
+            //     );
+            // },
+            function(done) {
+                async.eachSeries(measSetTestCmd,
+                    function(item,done) {
+                        dsoObj.meas1.prop.set(item.prop, item.arg, done);
+
+                    },function(err, results) {
+                        log(&#x27;--------- Measure1 Set Prop Test Cmd -------------&#x27;);
+                        log(&#x27;err:&#x27; + err);
+                        log(&#x27;results:&#x27; + results);
+                        log(&#x27;--------------------------------------------&#x27;);
+                        done();
+                    }
+                );
+            },
+
+            function(done){
+                async.eachSeries(measGetTestCmd,
+                    function(item, done) {
+                        dsoObj.meas1.prop.get(item.prop, item.arg, done);
+
+                    },function(err, results) {
+                        log(&#x27;--------- Measure1 Get Prop Test Cmd -------------&#x27;);
+                        log(&#x27;err:&#x27; + err);
+                        log(&#x27;results:&#x27; + results);
+                        log(&#x27;--------------------------------------------&#x27;);
+                        done();
+                    }
+                );
+            },
+
+
+
+
+            function(done) {
+                async.eachSeries(trigTestCmd,
+                    function(item, done) {
+                        dsoObj.trig.prop.set(item.prop, item.arg, done);
+
+                    },function(err, results) {
+                        log(&#x27;--------- Trigger Set Prop Test Cmd -------------&#x27;);
+                        log(&#x27;err:&#x27; + err);
+                        log(&#x27;results:&#x27; + results);
+                        log(&#x27;--------------------------------------------&#x27;);
+                        done();
+                    }
+                );
+            },
+            function(done) {
+
+                async.eachSeries(sysTestCmd,
+                //async.eachSeries(dispTestCmd,
+                    function(item, done) {
+                        dsoObj.sys.prop.get(item.prop, item.arg, done);
+                    },function(err, results){
+                        log(&#x27;*************** System Get Error After Trigger Test Cmd ***************&#x27;);
+                        done();
+                    }
+                );
+            }
+        ]
+        ,
+        function(err, results) {
+            log(&#x27;err:&#x27; + err);
+            log(&#x27;results:&#x27; + results);
+            log(&#x27;--------- dso object info -------------&#x27;);
+            if (typeof callback  === &#x27;function&#x27;)
+                    callback();
+        }
+    );
+};
+
+// function sendIDN(){
+// }
+function checkDsoExist(dsoObj, callback) {
+    var timeoutCnt = 0;
+    log(&#x27;checkDsoExist&#x27;);
+    log(&#x27;write command to server&#x27;);
+    dsoObj.state.conn = &#x27;query&#x27;;
+    dsoObj.cmdHandler = getIDN;
+    dsoObj.handlerSelf = dsoObj;
+    dsoObj.state.setTimeout = true;
+    dsoObj.state.timeoutObj = setTimeout(function() {
+        log(&#x27;settimeout&#x27;);
+        dsoObj.state.conn = &#x27;timeout&#x27;;
+        dsoObj.write(&#x27;*idn?\r\n&#x27;);
+    }, 1000);
+    dsoObj.write(&#x27;*idn?\r\n&#x27;);
+    dsoObj.syncCallback = (function() {
+        var self = this;
+
+        if(timeoutCnt++ &gt; 10) {
+            callback(&#x27;error&#x27;);
+        }
+
+        if(this.gdsType ===&#x27;&#x27;) {
+            this.state.setTimeout = true;
+            this.state.timeoutObj = setTimeout(function() {
+                log(&#x27;settimeout&#x27;);
+                self.state.conn = &#x27;timeout&#x27;;
+                self.write(&#x27;*idn?\r\n&#x27;);
+            }, 1000);
+        }else {
+            callback(null);
+        }
+    }).bind(dsoObj);
+
+
+    // async.series(
+    //     [
+    //         function(done) {
+    //             log(&#x27;write command to server&#x27;);
+    //             dsoObj.state.conn=&#x27;query&#x27;;
+    //             dsoObj.cmdHandler=getIDN;
+    //             dsoObj.handlerSelf=dsoObj;
+    //             dsoObj.syncCallback=done;
+    //             dsoObj.write(&#x27;*idn?\r\n&#x27;);
+    //         }
+    //     ]
+    //     ,
+    //     function(err,results){
+    //         dsoObj.state.conn=&#x27;connected&#x27;;
+    //         log(&#x27;err:&#x27;+err);
+    //         log(&#x27;results:&#x27;+results);
+    //         log(&#x27;--------- dso object info -------------&#x27;);
+    //         if(typeof callback  === &#x27;function&#x27;){
+    //                 callback();
+    //                 return;
+    //         }
+    //     }
+    // );
+};
+function enableSocketTime(dsoObj) {
+    dsoObj.net.socket.setTimeout(1500,function() {
+        log(&#x27;socket timeout&#x27;);
+        if(dsoObj.state.conn === &#x27;timeout&#x27;) {
+            dsoObj.net.socket.end();
+            dsoObj.net.socket.destroy();
+        }
+    })
+}
+function enableInterfTime(dsoObj) {
+    if(dsoObj.interf === &#x27;net&#x27;)
+        enableSocketTime(dsoObj);
+}
+var Dso = function() {
+    // dsoObj.state=&#x27;connectting&#x27;;
+    this.state = {
+        conn : &#x27;disconnect&#x27;,
+        currentCmd : &#x27;&#x27;,
+        currentId : &#x27;&#x27;,
+        setTimeout : false,
+        timeoutObj : {},
+        errCode : {message:&#x27;&#x27;, type:&#x27;&#x27;, handler:function(){}}
+    };
+    // this.port=port;
+    // this.host_addr=host_addr;
+    this.interf = &#x27;net&#x27;;
+    this.gdsType = &#x27;&#x27;;
+    this.gdsModel = &#x27;&#x27;;
+    this.chNum = 0;
+    this.activeCh = &#x27;&#x27;;
+    this.cmdHandler = getIDN;
+    this.handlerSelf = {};
+    this.syncCallback = function(){};
+    this.maxChNum = 0;
+    this.commandObj = {};
+    this.cmdSequence = [];
+    this.writeTimeoutObj = null;
+    this.asyncWrite = &#x27;done&#x27;;
+    this.errHandler = function(){};
+    this.write = function(data) {
+        if (this.interf === &#x27;usb&#x27;) {
+            this.usb.write(data);
+        }else if (this.interf === &#x27;net&#x27;) {
+            this.net.socket.write(data);
+            return true;
+        }
+        // else
+        //     return false;
+        // return true;
+    };
+    this.dataHandler = (function(data) {
+        if ((data === 0x0a) &amp;&amp; (data.length === 1)) {
+            log(&#x27;receive one byte data&#x27;);
+            log(Number(data));
+            log(data);
+            log(&#x27;=====================&#x27;);
+            return;
+        }
+
+        log(&#x27;dataHandler receive &#x27; + data.slice(0,11) + &#x27;length=&#x27; + data.length);
+        if (this.state.setTimeout) {
+            // if(this.state.conn!==&#x27;timeout&#x27;){
+                log(&#x27;clearTimeout&#x27;);
+                clearTimeout(this.state.timeoutObj);
+            // }
+            this.state.setTimeout=false;
+        }
+        if (this.cmdHandler(this.handlerSelf, data,this.syncCallback) ===true) {
+            if (typeof this.syncCallback === &#x27;function&#x27;) {
+                log(&#x27;call callback&#x27;);
+                this.syncCallback();
+            }
+        }
+    }).bind(this);
+
+}
+uitl.inherits(Dso, events.EventEmitter);
+
+Dso.prototype.GetSnapshot = function(cb) {
+    this.sys.prop.get(&#x27;DispOut&#x27;, &#x27;&#x27;, function() {
+        if (cb){
+            cb(this.sys.dispData);
+        }
+    });
+
+}
+
+Dso.prototype.GetRawdata = function(ch,cb) {
+    var self = this;
+
+    log(sytConstant.chID[ch]);
+
+    if (sytConstant.chID[ch] !== undefined) {
+        var cmd = [
+                {id:&#x27;acq&#x27;,prop:&#x27;AcqHeader&#x27;,arg:&#x27;OFF&#x27;,cb:done,method:&#x27;set&#x27;},
+                {id:ch,prop:&#x27;AcqMemory&#x27;,arg:&#x27;&#x27;,cb:cb,method:&#x27;get&#x27;}
+            ];
+            this.emit(&#x27;cmd_write&#x27;,cmd);
+
+            // async.eachSeries(cmd,
+            //     function(item,done){
+            //         log(item);
+            //         if(item.id===&#x27;acq&#x27;){
+            //             self.acq.prop.set(item.prop,item.arg,done);
+            //         }
+            //         else{
+            //             self[ch].prop.get(item.prop,item.arg,done);
+            //         }
+
+            //     },function(err,results){
+            //         if(cb)
+            //             cb(self[ch].rawdata);
+            //     }
+            // );
+    }else {
+        if(cb){
+            cb(&#x27;error&#x27;);
+        }
+    }
+
+}
+
+Dso.prototype.onSocketErr=function(cb) {
+    var self = this;
+    this.net.socket.on(&#x27;error&#x27;, function(e) {
+        log(&#x27;onTcpConnect: connect error!&#x27;);
+        self.state.conn = &#x27;disconnect&#x27;;
+        self.net.socket.end();
+        if (cb){
+            cb(e.message);
+        }
+    });
+}
+
+Dso.prototype.GetPort = function(cb) {
+    if (cb){
+        cb(this.net.port);
+    }else {
+        return this.net.port;
+    }
+}
+
+Dso.prototype.GetAddr = function(cb) {
+    if(cb){
+        cb(this.net.host_addr);
+    }else {
+        return this.net.host_addr;
+    }
+}
+
+
+
+Dso.prototype.reloadState = function(cb) {
+    var self = this;
+
+    if(this.state.conn ===&#x27;disconnect&#x27;) {
+        cb(&#x27;connection broken&#x27;);
+        return;
+    }
+
+    enableInterfTime(this);
+    var reloadCmd = [].concat(trigLoadCmd);
+    reloadCmd = reloadCmd.concat(acqLoadCmd);
+    reloadCmd = reloadCmd.concat(horLoadCmd);
+    async.series(
+        [
+            function(done) {
+                async.eachSeries(reloadCmd,
+                    function(item, done) {
+                        self[item.id].prop.get(item.prop, item.arg,done);
+
+                    },function(err, results) {
+                        done();
+                    }
+                );
+            },
+            function(done) {
+                var chCmd = [];
+                for(var i = 0; i &lt; self.maxChNum; i++) {
+                    chCmd = chCmd.concat(chanLoadCmd[i]);
+                }
+
+                async.eachSeries(chCmd,
+                    function(item, done) {
+                            self[item.id].prop.get(item.prop, item.arg, done);
+
+                    },function(err, results) {
+                        done();
+                    }
+                );
+
+            }
+        ]
+        ,
+        function(err, results) {
+            self.state.conn = &#x27;connected&#x27;;
+            if (cb) {
+                cb();
+                return;
+            }
+        }
+    );
+};
+
+function getCmdObj() {
+    var FilePath = path.join(__dirname, &#x27;/command.json&#x27;);
+
+    this.commandObj = JSON.parse(fs.readFileSync(FilePath));
+}
+function BindNetObj(dsoObj, port, host_addr) {
+
+    // dsoObj.port=port;
+    // dsoObj.host_addr=host_addr;
+    dsoObj.interf = &#x27;net&#x27;;
+    dsoObj.net = {
+        dataHandler : function(data) {
+            // log(&#x27;socket on data event!&#x27;);
+
+            // socket idle when send query command
+            if (dsoObj.state.setTimeout) {
+                if (dsoObj.state.conn !== &#x27;timeout&#x27;) {
+                    log(&#x27;clearTimeout&#x27;);
+                    clearTimeout(dsoObj.state.timeoutObj);
+                }
+                dsoObj.state.setTimeout = false;
+            }
+
+            if ((dsoObj.state.conn === &#x27;query&#x27;) || (dsoObj.state.conn === &#x27;timeout&#x27;)) {
+                if (dsoObj.cmdHandler(dsoObj.handlerSelf, data, dsoObj.syncCallback) === true) {
+                    if (dsoObj.syncCallback) {
+                        log(&#x27;call callback&#x27;);
+                        dsoObj.syncCallback();
+                    }
+                }
+            }
+        },
+        port : port,
+        host_addr : host_addr,
+        socket : {}
+    };
+}
+Dso.prototype.tcpConnect = function(Callback) {
+    var err_string;
+    var self = this;
+
+    this.net.socket = net.connect( this.net.port, this.net.host_addr, function() { //&#x27;connect&#x27; listener
+                      log(&#x27;connected to server!&#x27;);
+                      //dsoObj.net.socket.setEncoding(&#x27;utf8&#x27;);
+                      self.net.socket.setMaxListeners(0);
+                      self.state.conn = &#x27;connected&#x27;;
+                      self.interf = &#x27;net&#x27;;
+                      // self.net.socket.on(&#x27;data&#x27;,self.net.dataHandler);
+                      self.net.socket.on(&#x27;data&#x27;,self.dataHandler);
+                      checkDsoExist(self,Callback);
+                      // if(Callback)
+                      //   Callback();
+                });
+
+            this.net.socket.on(&#x27;close&#x27;, function(e) {
+            log(&#x27;onTcpConnect: close!&#x27;);
+            self.state.conn = &#x27;disconnect&#x27;;
+            err_string = e.message;
+            //dsoObj.net.socket.destroy();
+        });
+};
+
+Dso.prototype.usbConnect = function(Callback) {
+    var err_string;
+    var self = this;
+
+    usbDev.openUsb(this, function() {
+            // log(self.usb);
+            // self.usb.onData(self.dataHandler);
+            checkDsoExist(self, Callback);
+    });
+};
+Dso.prototype.cmd_write = function(cmdSequence) {
+    var self = this;
+    var cb = null;
+
+    var cmd = [];
+
+    if (this.asyncWrite === &#x27;busy&#x27;) {
+        log(&#x27;async write busy&#x27;);
+        if (this.writeTimeoutObj === null) {
+            log(&#x27;set timeout&#x27;);
+            this.writeTimeoutObj = setTimeout(function() {
+                log(&#x27;cmd_write reissue&#x27;);
+                self.writeTimeoutObj = null;
+                self.cmd_write(cmdSequence);
+            },100);
+        }
+        return;
+    }
+
+    if (this.cmdSequence.length === 0) {
+        if (this.writeTimeoutObj !== null) {
+            clearTimeout(this.writeTimeoutObj);
+            // this.writeTimeoutObj=null;
+            this.emit(&#x27;cmd_write&#x27;, self.cmdSequence);
+        }
+        log(&#x27;cmdSequence = 0&#x27;);
+        return;
+    }
+
+    for (var i = 0, len = this.cmdSequence.length; i &lt; len; i++) {
+        cmd[i] = this.cmdSequence.shift();
+
+        if (cmd[i].cb !== null){// avoid missing async callback
+            cb = cmd[i].cb;
+                this.writeTimeoutObj = setTimeout(function() {
+                    log(&#x27;cmd_write reissue&#x27;);
+                    self.writeTimeoutObj = null;
+                    self.cmd_write(cmdSequence);
+                },100);
+            break;
+        }
+    }
+    self.asyncWrite = &#x27;busy&#x27;;
+    async.eachSeries(cmd,
+        function(item,done) {
+            log(item);
+            if(item.method === &#x27;set&#x27;) {
+                self[item.id].prop.set(item.prop, item.arg, done);
+            }else {
+                self[item.id].prop.get(item.prop, item.arg, done);
+            }
+        },function(err, results) {
+            self.asyncWrite = &#x27;done&#x27;;
+            log(&#x27;async write done&#x27;);
+            if (cb)
+                cb(err);
+        }
+    );
+
+
+
+}
+
+/**
+*   Create all needed private properties and method
+*
+*   @private
+*   @constructor _DsoObj
+*
+*   @return {Object} Private method used to control DSO
+*/
+var _DsoObj = function() {
+
+    var dsoObj = new Dso();
+
+    getCmdObj.call(dsoObj);
+    //assign dso system command process method to dsoObj.sys
+    dsoObj.sys = syscmd.initSysObj.call(dsoObj, &#x27;sys&#x27;);
+
+    dsoObj.trig = trigcmd.initTrigObj.call(dsoObj, &#x27;trig&#x27;);
+
+    dsoObj.acq = acqcmd.initAcqObj.call(dsoObj, &#x27;acq&#x27;);
+
+    dsoObj.hor = horcmd.initHorObj.call(dsoObj, &#x27;hor&#x27;);
+
+    dsoObj.math = mathcmd.initMathObj.call(dsoObj, &#x27;math&#x27;);
+    dsoObj.meas1 = meascmd.initMeasObj.call(dsoObj, &#x27;meas1&#x27;);
+    dsoObj.meas2 = meascmd.initMeasObj.call(dsoObj, &#x27;meas2&#x27;);
+    dsoObj.meas3 = meascmd.initMeasObj.call(dsoObj, &#x27;meas3&#x27;);
+    dsoObj.meas4 = meascmd.initMeasObj.call(dsoObj, &#x27;meas4&#x27;);
+    dsoObj.meas5 = meascmd.initMeasObj.call(dsoObj, &#x27;meas5&#x27;);
+    dsoObj.meas6 = meascmd.initMeasObj.call(dsoObj, &#x27;meas6&#x27;);
+    dsoObj.meas7 = meascmd.initMeasObj.call(dsoObj, &#x27;meas7&#x27;);
+    dsoObj.meas8 = meascmd.initMeasObj.call(dsoObj, &#x27;meas8&#x27;);
+
+    dsoObj.ch1 = channel.initChanObj.call(dsoObj, &#x27;ch1&#x27;);
+    dsoObj.ch2 = channel.initChanObj.call(dsoObj, &#x27;ch2&#x27;);
+    dsoObj.ch3 = channel.initChanObj.call(dsoObj, &#x27;ch3&#x27;);
+    dsoObj.ch4 = channel.initChanObj.call(dsoObj, &#x27;ch4&#x27;);
+    // for (var i = 0; i&lt;supportType.length; i++){
+    //     log(dsoObj.commandObj[SupportedModel[i]].model[0]);
+    // }
+    dsoObj.on(&#x27;cmd_write&#x27;, dsoObj.cmd_write);
+    return dsoObj;
+};
+
+/**
+*   The class define all needed public properties and methods
+*
+*   @class dsoctrl
+*
+*
+*/
+var _DsoCtrl = function(dsoObj) {
+    var dsoctrl = {};
+
+/**
+*   The method belong to dsoctrl class used to connect to device,
+*   connect method must be called and wait to complete before any dsoctrl method.
+*
+*   @method connect
+*   @param {Function} callback  callback(e) Called when connection has been made
+*
+*/
+    dsoctrl.connect = (function(callback) {
+        if (this.interf === &#x27;usb&#x27;) {
+            this.usbConnect(callback);
+        }else if (this.interf === &#x27;net&#x27;) {
+            this.tcpConnect(callback);
+        }
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to load all properties from device,
+*   like trigger type, channel state .. etc.
+*
+*   @method reloadState
+*   @param {Function} callback callback(e) Called when finished loading
+*
+*/
+    dsoctrl.reloadState = (function(callback) {
+        var chCmd = [];
+        var self = this;
+        function reload(e) {
+            if (e) {
+                if(callback) callback(&#x27;error&#x27;);
+            }else {
+                chCmd[chCmd.length-1].cb = reload;
+                if(callback) callback(null);
+            }
+        };
+        // this.reloadState(callback)
+        this.cmdSequence = this.cmdSequence.concat(acqLoadCmd);
+        this.cmdSequence = this.cmdSequence.concat(trigLoadCmd);
+        this.cmdSequence = this.cmdSequence.concat(horLoadCmd);
+        for(var i = 0; i &lt; this.maxChNum; i++) {
+            chCmd = chanLoadCmd[i].slice(0);
+            this.cmdSequence = this.cmdSequence.concat(chCmd);
+        }
+        chCmd[chCmd.length-1].cb = reload;
+        // this.cmdSequence[this.cmdSequence.length-1].cb = reload;
+        // log(this.cmdSequence);
+        this.emit(&#x27;cmd_write&#x27;, this.cmdSequence);
+
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to load horizontal properties from device,
+*   like time division, position .. etc.
+*
+*   @method getHorizontal
+*   @param {Function} callback callback(e, horProperty) Called when finished loading
+*
+*/
+/**
+*   Horizontal property of device.
+*
+*   @property horProperty
+*   @param {String} position Specify the distance with triggered pointer of the main window
+*   @param {String} zposition Specify the distance with triggered pointer of the zoom window
+*   @param {String} scale Specify the time divison of the main window
+*   @param {String} zscale Specify the time divison of the zoom window
+*   @param {String} mode Specify which mode device on
+*   @param {String} expand Specify timebase expand by center or trigger position
+*/
+    dsoctrl.getHorizontal = (function(callback) {
+        // this.GetSnapshot(callback);
+        var self = this;
+        function rawData(e) {
+            if (e){
+                if (callback) callback(&#x27;error&#x27;);
+            }else {
+                if (callback) callback(null, self.hor);
+            }
+        };
+        var cmd = [
+                {id:&#x27;hor&#x27;,prop:&#x27;HorPosition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;hor&#x27;,prop:&#x27;HorScale&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;hor&#x27;,prop:&#x27;HorMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;hor&#x27;,prop:&#x27;HorExpand&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;hor&#x27;,prop:&#x27;HorZoomPosition&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;hor&#x27;,prop:&#x27;HorZoomScale&#x27;,arg:&#x27;&#x27;,cb:rawData,method:&#x27;get&#x27;}
+            ];
+        this.cmdSequence = this.cmdSequence.concat(cmd);
+        // log(this.cmdSequence);
+        this.emit(&#x27;cmd_write&#x27;, cmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to load vertical properties from device,
+*   like scale, position .. etc.
+*
+*   @method getVertical
+*   @param {String} ch Specify which channel wants to be loaded
+*   @param {Function} callback callback(e, chProperty) Called when finished loading
+*
+*/
+/**
+*   Channel property of device.
+*
+*   @property chProperty
+*   @param {String} coupling Specify coupling on AC,DC or GND
+*   @param {String} impedance Specify the impedance of the analog channel
+*   @param {String} invert
+*   @param {String} bandwidth
+*   @param {String} expand
+*   @param {String} state
+*   @param {String} position
+*   @param {String} deskew
+*   @param {String} rawdata
+*   @param {String} probe.unit
+*   @param {String} probe.atten
+*/
+    dsoctrl.getVertical = (function(ch, callback) {
+        // this.GetSnapshot(callback);
+        var self = this;
+        var chNum = sytConstant.chID[ch];
+        var chCmd;
+        function vetical(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+            }else {
+                chCmd[chCmd.length-1].cb = null;
+                if (callback) callback(null, self[ch]);
+            }
+        };
+
+        if(chNum &lt; this.maxChNum) {
+            chCmd = chanLoadCmd[chNum].slice(0);
+            chCmd[chCmd.length-1].cb = vetical;
+            this.cmdSequence = this.cmdSequence.concat(chCmd);
+            // this.cmdSequence[this.cmdSequence.length-1].cb = vetical;
+            // log(chanLoadCmd[chNum]);
+            // log(&#x27;----------------------------&#x27;);
+            this.emit(&#x27;cmd_write&#x27;, this.cmdSequence);
+        }
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to get the current screen from device,
+*
+*   @method getSnapshot
+*   @param {Function} callback callback(e, dsipData) Called when finished loading
+*
+*/
+    dsoctrl.getSnapshot = (function(callback) {
+        // this.GetSnapshot(callback);
+        var self = this;
+        function snapshot(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+            }else {
+                if (callback) callback(null, self.sys.dispData);
+            }
+        };
+        var cmd = [
+                {id:&#x27;sys&#x27;,prop:&#x27;DispOut&#x27;,arg:&#x27;OFF&#x27;,cb:snapshot,method:&#x27;get&#x27;}
+            ];
+        this.cmdSequence = this.cmdSequence.concat(cmd);
+        this.emit(&#x27;cmd_write&#x27;, cmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to get the data in acquisition memory for
+*   the selected channel form device
+*
+*   @method getRawdata
+*   @param {String} ch Specify which channel wants to be loaded
+*   @param {Function} callback callback(e, rawData) Called when finished loading
+*
+*/
+    dsoctrl.getRawdata = (function(ch, callback) {
+        // this.GetRawdata(ch,callback);
+        var self = this;
+        //log(sytConstant.chID[ch]);
+        function rawData(e) {
+            if (e){
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null, self[ch].rawdata);
+            }
+
+        };
+
+        if(sytConstant.chID[ch] !== undefined){
+            var cmd=[
+                    {id:&#x27;acq&#x27;,prop:&#x27;AcqHeader&#x27;,arg:&#x27;OFF&#x27;,cb:null,method:&#x27;set&#x27;},
+                    {id:ch,prop:&#x27;AcqMemory&#x27;,arg:&#x27;&#x27;,cb:rawData,method:&#x27;get&#x27;}
+                ];
+            this.cmdSequence = this.cmdSequence.concat(cmd);
+            this.emit(&#x27;cmd_write&#x27;, cmd);
+
+        }else {
+            if (callback) callback(&#x27;error&#x27;);
+        }
+        return this;
+
+    }).bind(dsoObj);
+
+    ////////////////////////////
+    dsoctrl.onError = (function(callback) {
+        this.errHandler = callback;
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to get the edge trigger properties from device
+*
+*   @method getEdgeTrig
+*   @param {Function} callback callback(e, trigProperty) Called when finished loading
+*
+*/
+/**
+*   Trigger property of device.
+*
+*   @property trigProperty
+*   @param {String} type
+*   @param {String} source
+*   @param {String} mode
+*   @param {String} holdoff
+*   @param {String} noise_rej
+*   @param {String} reject
+*   @param {String} level
+*   @param {String} alt
+*   @param {String} state
+*   @param {String} edge.coupling
+*   @param {String} edge.slop
+*/
+    dsoctrl.getEdgeTrig = (function(callback) {
+        var self = this;
+        function edgeTrig(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null, self.trig);
+            }
+
+        };
+        var trigCmd = [
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigType&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigSource&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigHighLevel&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigEdgeSlop&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigCouple&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigNoiseRej&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:&#x27;trig&#x27;,prop:&#x27;TrigHoldoff&#x27;,arg:&#x27;&#x27;,cb:edgeTrig,method:&#x27;get&#x27;}
+            ];
+        // this.GetRawdata(ch,callback);
+
+        this.cmdSequence = this.cmdSequence.concat(trigCmd);
+        this.emit(&#x27;cmd_write&#x27;, trigCmd);
+    }).bind(dsoObj);
+
+
+/**
+*   The method belong to dsoctrl class used to get the measurment properties
+*   for the selected measure channel from device
+*
+*   @method getMeas
+*   @param {String} mCh Specify which measure channel wants to be loaded
+*   @param {Function} callback callback(e, measProperty) Called when finished loading
+*
+*/
+/**
+*   Measurement property of device.
+*
+*   @property measProperty
+*   @param {String} stdValue
+*   @param {String} minValue
+*   @param {String} meanValue
+*   @param {String} value
+*   @param {String} state
+*   @param {String} source1
+*   @param {String} source2
+*   @param {String} type
+*   @param {String} state
+*/
+
+    dsoctrl.getMeas = (function(mCh, callback) {
+        var self = this;
+        function measCmd(e) {
+            if (e) {
+                if(callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null, self[mCh]);
+            }
+        };
+        var measVal = [
+                {id:mCh,prop:&#x27;MeasureState&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                // {id:&#x27;sys&#x27;,prop:&#x27;StatisticMode&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureValue&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureSource1&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureSource2&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureType&#x27;,arg:&#x27;&#x27;,cb:measCmd,method:&#x27;get&#x27;}
+            ];
+        var measStd = [
+                {id:mCh,prop:&#x27;MeasureStd&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureMin&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureMean&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;},
+                {id:mCh,prop:&#x27;MeasureMax&#x27;,arg:&#x27;&#x27;,cb:null,method:&#x27;get&#x27;}
+            ];
+
+        if(this.sys.staMode === &#x27;ON&#x27;){
+            this.cmdSequence = this.cmdSequence.concat(measStd);
+        }
+        this.cmdSequence = this.cmdSequence.concat(measVal);
+        this.emit(&#x27;cmd_write&#x27;, measCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to get the measurment type
+*   of device supported
+*
+*   @method supportedMeasType
+*   @param {Array} measureType
+*
+*/
+    dsoctrl.supportedMeasType = (function(callback) {
+        var self = this;
+
+        log(this.commandObj[this.gdsType].MeasureType.parameter);
+        return this.commandObj[this.gdsType].MeasureType.parameter;
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to setup a periodical measure channel with specify measure type
+*   and source channel
+*
+*   @method setMeas
+*   @param {Object} measConf Config to setup a measure channel
+*   @param {Function} callback Called when finished setting
+*
+*/
+
+/**
+*
+*   Object used to setup a measure channel
+*
+*   @property measConf
+*   @type Object
+*   @param {String} src1 Specify first source channel for measurement
+*   @param {String} src2 Specify second source channel for delay measure type
+*   @param {String} type Specify measure type
+*/
+    dsoctrl.setMeas = (function(conf,callback) {
+        var self = this;
+        function measCmd(e){
+            if (e) {
+                if (callback) {
+                    log(e);
+                    callback(&#x27;error&#x27;);
+                }
+
+            }else {
+                if (callback) callback();
+            }
+
+        };
+        var measSet = [
+                {id:conf.ch,prop:&#x27;MeasureState&#x27;,arg:&#x27;ON&#x27;,cb:null,method:&#x27;set&#x27;},
+                {id:conf.ch,prop:&#x27;MeasureSource1&#x27;,arg:conf.src1.toUpperCase(),cb:null,method:&#x27;set&#x27;}
+            ],
+            measSrc2 = [
+                {id:conf.ch,prop:&#x27;MeasureSource2&#x27;,arg:conf.src2.toUpperCase(),cb:null,method:&#x27;set&#x27;}
+            ],
+            measType = [
+                {id:conf.ch,prop:&#x27;MeasureType&#x27;,arg:conf.type,cb:measCmd,method:&#x27;set&#x27;}
+            ];
+        // this.GetRawdata(ch,callback);
+        if (conf.type === undefined) {
+            meascmd(&#x27;error&#x27;);
+            return;
+        }
+
+        if (conf.src2 !== undefined) {
+            this.cmdSequence=this.cmdSequence.concat(measSrc2);
+        }
+
+        this.cmdSequence = this.cmdSequence.concat(measSet);
+        this.cmdSequence = this.cmdSequence.concat(measType);
+        this.emit(&#x27;cmd_write&#x27;, measSet);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to turn on statistics for all measure channels
+*
+*   @method statisticOn
+*   @param {Function} callback Called when finished setting
+*
+*/
+    dsoctrl.statisticOn = (function(callback) {
+        var self = this;
+        function measCmd(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null);
+            }
+        };
+        var measCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;StatisticMode&#x27;,arg:&#x27;ON&#x27;,cb:measCmd,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(measCmd);
+        this.emit(&#x27;cmd_write&#x27;, measCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to turn off statistics for all measure channels
+*
+*   @method statisticOff
+*   @param {Function} callback Called when finished setting
+*
+*/
+    dsoctrl.statisticOff = (function(callback) {
+        var self = this;
+        function statistic(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+            }else {
+                if (callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;StatisticMode&#x27;,arg:&#x27;OFF&#x27;,cb:statistic,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to set the statistic weight all measure channels
+*
+*   @method statisticWeight
+*   @param {Number} weight Specify statistic weight
+*   @param {Function} callback Called when finished setting
+*
+*/
+    dsoctrl.statisticWeight = (function(weight,callback) {
+        var self = this;
+        function statistic(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+            }else {
+                if (callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;StatisticStaWeight&#x27;,arg:weight,cb:statistic,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to set the device into run state
+*
+*   @method run
+*   @param {Function} callback Called when finished setting
+*
+*/
+    dsoctrl.run = (function(callback){
+        var self = this;
+        function sysRun(e){
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;RUN&#x27;,arg:&#x27;&#x27;,cb:sysRun,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to set the device into stop state
+*
+*   @method stop
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.stop = (function(callback) {
+        var self = this;
+        function sysStop(e) {
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;STOP&#x27;,arg:&#x27;&#x27;,cb:sysStop,method:&#x27;set&#x27;}
+        ];
+        log(&#x27;set dos stop&#x27;);
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to set the device into single state
+*
+*   @method single
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.single = (function(callback) {
+        var self = this;
+        function sysSingle(e) {
+            if (e){
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if(callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;SINGLE&#x27;,arg:&#x27;&#x27;,cb:sysSingle,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to set the device into autoset state
+*
+*   @method Autoset
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.autoset = (function(callback){
+        var self = this;
+        function sysAutoset(e){
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+            }else {
+                if (callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;AUTOSET&#x27;,arg:&#x27;&#x27;,cb:sysAutoset,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to set the device into force trigger state
+*
+*   @method force
+*   @param {Function} callback Called when finished setting
+*/
+    dsoctrl.force = (function(callback) {
+        var self = this;
+        function sysForce(e){
+            if (e) {
+                if (callback) callback(&#x27;error&#x27;);
+
+            }else {
+                if (callback) callback(null);
+            }
+
+        };
+        var sysCmd = [
+            {id:&#x27;sys&#x27;,prop:&#x27;FORCE&#x27;,arg:&#x27;&#x27;,cb:sysForce,method:&#x27;set&#x27;}
+        ];
+
+        this.cmdSequence = this.cmdSequence.concat(sysCmd);
+        this.emit(&#x27;cmd_write&#x27;, sysCmd);
+    }).bind(dsoObj);
+
+
+    return dsoctrl;
+
+}
+
+/**
+*   Create new instance that used to communicate with instrument through Ethernet
+*
+*   @class dsoNet
+*   @constructor
+*   @extends dsoctrl
+*   @param {string} port Port number bind to TCP socket
+*   @param {string} host_addr Ip address bind to TCP socket
+*
+*   @return {Object} Return dsoctrl object
+*/
+exports.DsoNet  = function(port, host_addr) {
+    var dsoObj = _DsoObj();
+        BindNetObj(dsoObj, port, host_addr);
+
+    return _DsoCtrl(dsoObj);
+};
+
+/**
+*   Create new instance that used to communicate with instrument through USB
+*
+*   @class dsoUSB
+*   @constructor
+*   @extends dsoctrl
+*   @param {string} vid Vender ID bind to USB device
+*   @param {string} pid Product ID bind to USB device
+*
+*   @return {Object} Return dsoctrl object
+*/
+exports.DsoUSB  = function(vid,pid) {
+
+    var dsoObj = _DsoObj();
+        usbDev.BindUsbObj(dsoObj, vid, pid);
+
+    return _DsoCtrl(dsoObj);
+};
+
+
+
+
+
+    </pre>
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

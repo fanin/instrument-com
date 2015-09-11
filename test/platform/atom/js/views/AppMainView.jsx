@@ -6,7 +6,7 @@ var AppScreenViewer   = require('./AppScreenView.jsx');
 var AppFooter         = require('./AppFooter.jsx');
 
 var remote = electronRequire('remote');
-var dsoDriver=remote.require('./index.js');
+var dsoDriver = remote.require('./index.js');
 var dsoCtrl;
 var AppMainView = React.createClass({
 
@@ -22,13 +22,16 @@ var AppMainView = React.createClass({
     },
 
     componentWillMount: function() {
+        var self = this;
         msoStore.addChangeListener(this._onReceiveMessage);
-        dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
+        dsoCtrl =  dsoDriver.DsoNet(3000,'172.16.5.68');
         // dsoCtrl=dsoDriver.DsoNet(3000,'192.168.1.49');
 
     },
 
     componentDidMount: function() {
+
+
 
     },
 

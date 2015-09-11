@@ -44,53 +44,108 @@ process.on('exit', function(code) {
 // });
 
 
-dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
+dsoCtrl= new dsoDriver.DsoNet(3000,'172.16.5.68');
+
+dsoCtrl.connect()
+    .then(dsoCtrl.run)
+    .then(function(){
+        dsoCtrl.getRawdata('ch1')
+            .then(function(data){
+            console.log(data);
+            });
+    })
+    .then(function(){
+        dsoCtrl.getHorizontal()
+            .then(function(data){
+            console.log(data);
+            });
+    })
+    .then(function(){
+        dsoCtrl.getVertical('ch1')
+            .then(function(data){
+            console.log(data);
+            });
+    })
+    .then(function(){
+        dsoCtrl.getSnapshot()
+            .then(function(data){
+            console.log(data);
+            });
+    })
+    .then(dsoCtrl.syncConfig)
+    .then(function(){
+        dsoCtrl.supportedMeasType()
+            .then(function(data){
+            console.log(data);
+            });
+    })
+    .then(function(){
+        dsoCtrl.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'})
+    })
+    .then(function(){
+        dsoCtrl.getMeas('meas1')
+            .then(function(data){
+            console.log(data);
+            });
+    })
+    .then(dsoCtrl.stop);
+
 // dsoCtrl=dsoDriver.DsoUSB(0x2184,0x003f);
 // dsoUsb=dsoDriver.DsoUSB(0x2204,0x098f);
 
 
 
-dsoCtrl.connect(function(e){
-    console.log('usbconnect error ='+e);
-    if(e==undefined){
-        console.log('reloadState');
-        // dsoCtrl.getRawdata('ch1',function(err,data){
-        //     console.log('get rawdata done')
-        //     console.log('1=======================================');
-        // });
-        // dsoCtrl.getHorizontal(function(err,data){
-        //     console.log('hor data');
-        //     console.log(data);
-        //     console.log('2=======================================');
-        // });
-        // dsoCtrl.getVertical('ch1',function(err,data){
-        //     console.log('ver data');
-        //     console.log(data);
-        //     console.log('3=======================================');
-        // });
-        // dsoCtrl.getSnapshot(function(err,data){
-        //     console.log('get snapshot done')
-        //     console.log('4=======================================');
-        // });
-        // dsoCtrl.reloadState(function(e){
-        //     console.log('reload done');
-        //     // setInterval(function(){
-        //     //     dsoCtrl.getSnapshot(function(err,data){
-        //     //         console.log('get snapshot done')
-        //     //     });
-        //     // },500);
-        // });
-        dsoCtrl.supportedMeasType();
-        dsoCtrl.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'},function(e,data){
-            dsoCtrl.getMeas('meas1',function(e,data){
-                console.log(data);
-            });
-        });
-    }
-    else{
-        console.log('no reload');
-    }
-});
+// dsoCtrl.connect(function(e){
+//     console.log('usbconnect error ='+e);
+//     if(e===null){
+//         console.log('reloadState');
+//         dsoCtrl.getRawdata('ch1',function(err,data){
+//             console.log('get rawdata done')
+//             console.log('1=======================================');
+//         });
+//         dsoCtrl.getHorizontal(function(err,data){
+//             console.log('hor data');
+//             console.log(data);
+//             console.log('2=======================================');
+//         });
+//         dsoCtrl.run(function(e){
+//             console.log('run done');
+//         });
+//         dsoCtrl.getVertical('ch1',function(err,data){
+//             console.log('ver data');
+//             console.log(data);
+//             console.log('3=======================================');
+//         });
+//         dsoCtrl.getSnapshot(function(err,data){
+//             console.log('get snapshot done')
+//             console.log('4=======================================');
+//         });
+//         dsoCtrl.syncConfig(function(e){
+//             console.log('reload done');
+//             // setInterval(function(){
+//             //     dsoCtrl.getSnapshot(function(err,data){
+//             //         console.log('get snapshot done')
+//             //     });
+//             // },500);
+//         });
+//         dsoCtrl.stop(function(e){
+//             console.log('stop done');
+//         });
+//         dsoCtrl.getVertical('ch1',function(err,data){
+//             console.log(data);
+//         });
+//         dsoCtrl.supportedMeasType();
+//         dsoCtrl.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'},function(e,data){
+//             dsoCtrl.getMeas('meas1',function(e,data){
+//                 console.log(data);
+//                 dsoCtrl.closeDev();
+//             });
+//         });
+//     }
+//     else{
+//         console.log('connet error: '+e);
+//     }
+// });
 
 
 
@@ -192,7 +247,7 @@ app.use(multer({
 //         res.end();
 //         build.setDsoType(req.params.modeltype);
 //     });
-// app.listen(port);
-// console.log('Server start on port' + port);
+app.listen(port);
+console.log('Server start on port' + port);
 
 

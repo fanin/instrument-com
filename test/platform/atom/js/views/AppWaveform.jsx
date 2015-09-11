@@ -44,38 +44,49 @@ var AppWaveform = React.createClass({
         var dsoCtrl=this.props.dsoctrl;
         // dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
         console.log(this.props);
-        this.props.dsoctrl.connect(function(e){
+
+        var rawAB=new ArrayBuffer(1000000);
+        var vArray=new Uint8Array(rawAB);
+        ipc.on('picture-data', function(res) {
+            dsoCtrl.getRawdata('ch1')
+                .then(function(data){
+                    var j,i,k,len;
+                    var rawAB=new ArrayBuffer(data.length);
+                    var vArray=new Uint8Array(rawAB);
+                    for(i=0,len=data.length;i<len;i++){
+                        vArray[i]=data[i];
+                    }
+
+                    var raw=new DataView(rawAB);
+                    var chRaw=[];
+                    len=data.length/2;
+                    // console.log('len='+len);
+
+
+
+                    for(i=0,j=0;i<len;i++,j+=2){
+                        chRaw.push([i,raw.getInt16(j)]);
+                        // console.log(j);
+                    }
+
+
+                    $.plot('.main-plot', [chRaw]);
+                    setTimeout(function(){
+                        rawAB=null;
+                        vArray=null;
+                        raw=null;
+                        chRaw=null;
+                     ipc.send('asynchronous-message', 'ping');
+
+                    }, 500);
+
+                });
+        });
+
+        dsoCtrl.connect().then(function(){
             ipc.send('asynchronous-message', 'ping');
         });
-        ipc.on('picture-data', function(res) {
-            dsoCtrl.getRawdata('ch1',function(err,data){
 
-                var j,i,k,len;
-                var rawAB=new ArrayBuffer(data.length);
-                var vArray=new Uint8Array(rawAB);
-                for(i=0,len=data.length;i<len;i++){
-                    vArray[i]=data[i];
-                }
-
-                var raw=new DataView(rawAB);
-                var chRaw=[];
-                console.log('len='+len);
-
-
-
-                for(i=0,j=0,len=data.length/2;i<len;i++,j+=2){
-                    chRaw.push([i,raw.getInt16(j)]);
-                    // console.log(j);
-                }
-
-
-                $.plot('.main-plot', [chRaw]);
-                setTimeout(function(){
-                 ipc.send('asynchronous-message', 'ping');
-                }, 50);
-
-            });
-        });
 
 
         // var d1 = [];

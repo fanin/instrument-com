@@ -85,6 +85,10 @@ function pairUsb(dsoObj,callback){
 exports.openUsb=function(dsoObj,callback){
     pairUsb(dsoObj,callback);
 }
+exports.closeUsb=function(dsoObj,callback){
+
+    dsoObj.usb.device.close(callback);
+}
 exports.BindUsbObj=function(dsoObj,vid,pid){
     dsoObj.interf='usb';
     dsoObj.usb={
