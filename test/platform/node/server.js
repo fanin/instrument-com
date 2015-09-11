@@ -44,10 +44,13 @@ process.on('exit', function(code) {
 // });
 
 
-dsoCtrl= new dsoDriver.DsoNet(3000,'172.16.5.68');
+dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
 
 dsoCtrl.connect()
     .then(dsoCtrl.run)
+    .then(function(){
+        dsoCtrl.enableCh('ch2');
+    })
     .then(function(){
         dsoCtrl.getRawdata('ch1')
             .then(function(data){
@@ -88,7 +91,10 @@ dsoCtrl.connect()
             console.log(data);
             });
     })
-    .then(dsoCtrl.stop);
+    .then(dsoCtrl.stop)
+    .then(function(){
+        dsoCtrl.disableCh('ch2');
+    });
 
 // dsoCtrl=dsoDriver.DsoUSB(0x2184,0x003f);
 // dsoUsb=dsoDriver.DsoUSB(0x2204,0x098f);

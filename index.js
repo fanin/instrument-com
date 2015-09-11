@@ -1000,7 +1000,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to release device's resource.
 *
 *   @method closeDev
-*   @return {null} Return null
+*   @return {null} null
 *
 */
     dsoctrl.closeDev = (function() {
@@ -1017,7 +1017,7 @@ var _DsoCtrl = function(dsoObj) {
 *   connect method must be called and wait to complete before any dsoctrl method.
 *
 *   @method connect
-*   @param {Function} callback  callback(e) Called when connection has been made
+*
 *
 */
     dsoctrl.connect = (function() {
@@ -1048,7 +1048,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to disconnect from device.
 *
 *   @method disconnect
-*   @param {Function} callback  callback(e) Called when connection has been made
+*
 *
 */
     dsoctrl.disconnect = (function() {
@@ -1073,11 +1073,11 @@ var _DsoCtrl = function(dsoObj) {
     }).bind(dsoObj);
 
 /**
-*   The method belong to dsoctrl class used to load all properties from device,
+*   The method belong to dsoctrl class used to sync all properties from device,
 *   like trigger type, channel state .. etc.
 *
 *   @method syncConfig
-*   @param {Function} callback callback(e) Called when finished loading
+*
 *
 */
     dsoctrl.syncConfig = (function() {
@@ -1114,7 +1114,7 @@ var _DsoCtrl = function(dsoObj) {
 *   like time division, position .. etc.
 *
 *   @method getHorizontal
-*   @param {Function} callback callback(e, horProperty) Called when finished loading
+*   @return {Object} horProperty
 *
 */
 /**
@@ -1163,7 +1163,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 *   @method getVertical
 *   @param {String} ch Specify which channel wants to be loaded
-*   @param {Function} callback callback(e, chProperty) Called when finished loading
+*   @return {Object} chProperty
 *
 */
 /**
@@ -1212,11 +1212,88 @@ var _DsoCtrl = function(dsoObj) {
         });
     }).bind(dsoObj);
 
+
+/**
+*   The method belong to dsoctrl class used to turn selected channel on
+*
+*   @method getVertical
+*   @param {String} ch Specify which channel wants to turn on
+*
+*
+*/
+    dsoctrl.enableCh = (function(ch) {
+        // this.GetSnapshot(callback);
+        var self = this;
+        var chNum = sytConstant.chID[ch];
+        var chCmd;
+
+        return new Promise(function(resolve, reject) {
+            function chstate(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    chCmd[chCmd.length-1].cb = null;
+                    resolve(self[ch]);
+                }
+
+            };
+
+            var chid = ch.toLowerCase();
+            if( (chid !== 'ch1') || (chid !== 'ch2') || (chid !== 'ch3') || (chid !== 'ch4')){
+                reject(Error("parameter error"));
+            }
+            var cmd = [
+                    {id:ch, prop:'ChState', arg:'ON', cb:chstate, method:'set'}
+                ];
+            self.cmdSequence = self.cmdSequence.concat(cmd);
+            self.emit('cmd_write', cmd);
+        });
+    }).bind(dsoObj);
+
+/**
+*   The method belong to dsoctrl class used to turn selected channel off
+*
+*   @method getVertical
+*   @param {String} ch Specify which channel wants to turn off
+*
+*
+*/
+    dsoctrl.disableCh = (function(ch) {
+        // this.GetSnapshot(callback);
+        var self = this;
+        var chNum = sytConstant.chID[ch];
+        var chCmd;
+
+        return new Promise(function(resolve, reject) {
+            function chstate(e){
+                if (e) {
+                    reject(Error("error"));
+
+                }else {
+                    chCmd[chCmd.length-1].cb = null;
+                    resolve(self[ch]);
+                }
+
+            };
+
+            var chid = ch.toLowerCase();
+            if( (chid !== 'ch1') || (chid !== 'ch2') || (chid !== 'ch3') || (chid !== 'ch4')){
+                reject(Error("parameter error"));
+            }
+            var cmd = [
+                    {id:ch, prop:'ChState', arg:'OFF', cb:chstate, method:'set'}
+                ];
+            self.cmdSequence = self.cmdSequence.concat(cmd);
+            self.emit('cmd_write', cmd);
+        });
+    }).bind(dsoObj);
+
 /**
 *   The method belong to dsoctrl class used to get the current screen from device,
 *
 *   @method getSnapshot
-*   @param {Function} callback callback(e, dsipData) Called when finished loading
+*   @return {Buffer} dsiplay data buffer
 *
 */
     dsoctrl.getSnapshot = (function() {
@@ -1248,7 +1325,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 *   @method getRawdata
 *   @param {String} ch Specify which channel wants to be loaded
-*   @param {Function} callback callback(e, rawData) Called when finished loading
+*   @return {Buffer} rawdata buffer
 *
 */
     dsoctrl.getRawdata = (function(ch) {
@@ -1291,7 +1368,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to get the edge trigger properties from device
 *
 *   @method getEdgeTrig
-*   @param {Function} callback callback(e, trigProperty) Called when finished loading
+*   @return {object} trigProperty
 *
 */
 /**
@@ -1348,7 +1425,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 *   @method getMeas
 *   @param {String} mCh Specify which measure channel wants to be loaded
-*   @param {Function} callback callback(e, measProperty) Called when finished loading
+*   @return {object} measProperty
 *
 */
 /**
@@ -1408,7 +1485,7 @@ var _DsoCtrl = function(dsoObj) {
 *   of device supported
 *
 *   @method supportedMeasType
-*   @param {Array} measureType
+*   @return {Array} supported measure type
 *
 */
     dsoctrl.supportedMeasType = (function() {
@@ -1427,7 +1504,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 *   @method setMeas
 *   @param {Object} measConf Config to setup a measure channel
-*   @param {Function} callback Called when finished setting
+*
 *
 */
 
@@ -1483,7 +1560,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to turn on statistics for all measure channels
 *
 *   @method statisticOn
-*   @param {Function} callback Called when finished setting
+*
 *
 */
     dsoctrl.statisticOn = (function() {
@@ -1512,7 +1589,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to turn off statistics for all measure channels
 *
 *   @method statisticOff
-*   @param {Function} callback Called when finished setting
+*
 *
 */
     dsoctrl.statisticOff = (function() {
@@ -1541,7 +1618,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 *   @method statisticWeight
 *   @param {Number} weight Specify statistic weight
-*   @param {Function} callback Called when finished setting
+*
 *
 */
     dsoctrl.statisticWeight = (function(weight) {
@@ -1569,7 +1646,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to set the device into run state
 *
 *   @method run
-*   @param {Function} callback Called when finished setting
+*
 *
 */
     dsoctrl.run = (function(){
@@ -1597,7 +1674,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to set the device into stop state
 *
 *   @method stop
-*   @param {Function} callback Called when finished setting
+*
 */
     dsoctrl.stop = (function() {
         var self = this;
@@ -1624,7 +1701,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to set the device into single state
 *
 *   @method single
-*   @param {Function} callback Called when finished setting
+*
 */
     dsoctrl.single = (function() {
         var self = this;
@@ -1652,7 +1729,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to set the device into autoset state
 *
 *   @method Autoset
-*   @param {Function} callback Called when finished setting
+*
 */
     dsoctrl.autoset = (function(){
         var self = this;
@@ -1680,7 +1757,7 @@ var _DsoCtrl = function(dsoObj) {
 *   The method belong to dsoctrl class used to set the device into force trigger state
 *
 *   @method force
-*   @param {Function} callback Called when finished setting
+*
 */
     dsoctrl.force = (function() {
         var self = this;

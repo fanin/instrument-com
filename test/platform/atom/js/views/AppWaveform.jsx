@@ -17,139 +17,96 @@ var AppWaveform = React.createClass({
     componentWillMount: function() {
 
     },
-
-
-// dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
-// dsoCtrl.tcpConnect(function(e){
-//     console.log(e);
-//     if(e==undefined){
-//         console.log('reloadState');
-//         dsoCtrl.reloadState(function(e){
-//             console.log('reload done');
-//             console.log(dsoCtrl);
-
-//         });
-//     }
-//     else{
-//         console.log('no reload');
-//     }
-// });
-
-
-
-
-
-
     componentDidMount: function() {
         var dsoCtrl=this.props.dsoctrl;
-        // dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
         console.log(this.props);
 
-        var rawAB=new ArrayBuffer(1000000);
-        var vArray=new Uint8Array(rawAB);
+        // draw waveform
+        // var rawAB=new ArrayBuffer(1000000);
+        // var vArray=new Uint8Array(rawAB);
+        // ipc.on('picture-data', function(res) {
+        //     dsoCtrl.getRawdata('ch1')
+        //         .then(function(data){
+        //             var j,i,k,len;
+        //             var rawAB=new ArrayBuffer(data.length);
+        //             var vArray=new Uint8Array(rawAB);
+        //             for(i=0,len=data.length;i<len;i++){
+        //                 vArray[i]=data[i];
+        //             }
+
+        //             var raw=new DataView(rawAB);
+        //             var chRaw=[];
+        //             len=data.length/2;
+        //             // console.log('len='+len);
+
+
+
+        //             for(i=0,j=0;i<len;i++,j+=2){
+        //                 chRaw.push([i,raw.getInt16(j)]);
+        //                 // console.log(j);
+        //             }
+
+
+        //             $.plot('.main-plot', [chRaw]);
+        //             setTimeout(function(){
+        //                 rawAB=null;
+        //                 vArray=null;
+        //                 raw=null;
+        //                 chRaw=null;
+        //              ipc.send('asynchronous-message', 'ping');
+
+        //             }, 500);
+
+        //         });
+        // });
+
+        // dsoCtrl.connect().then(function(){
+        //     ipc.send('asynchronous-message', 'ping');
+        // });
+
+
+
+        var canvas=$('.screen-canvas')[0];
+        var ctx = canvas.getContext('2d');
+        var cnt=0;
+
         ipc.on('picture-data', function(res) {
-            dsoCtrl.getRawdata('ch1')
-                .then(function(data){
-                    var j,i,k,len;
-                    var rawAB=new ArrayBuffer(data.length);
-                    var vArray=new Uint8Array(rawAB);
-                    for(i=0,len=data.length;i<len;i++){
-                        vArray[i]=data[i];
+            dsoCtrl.getSnapshot().then(function(data){
+
+                var j,i,k,len=data.length;
+                var img=new Uint8Array(data);
+
+                console.log('dsoClient.sys.dispData.length='+len);
+                for(j=0,i=0;i<len;){
+                    var r,g,b,pix;
+                    cnt=(img[i+1]<<8)+img[i];
+                    //console.log('bcnt='+cnt);
+                    pix=(img[i+3]<<8)+img[i+2];
+                    r=(pix & 0x001f)<<3;
+                    g=(pix & 0x07e0)>>>3;
+                    b=(pix & 0xf800)>>>8;
+                    for(k=0;k<cnt;k++){
+                        imgDataPong.data[j]=b;
+                        imgDataPong.data[j+1]=g;
+                        imgDataPong.data[j+2]=r;
+                        imgDataPong.data[j+3]=255;
+                        j+=4;
                     }
+                    i+=4;
+                     // console.log('i='+i);
+                     // console.log('j='+j);
+                }
+                ctx.putImageData(imgDataPong,0,0);
+                //delete img;
+                setTimeout(function(){
+                 ipc.send('asynchronous-message', 'ping');
+                }, 50);
 
-                    var raw=new DataView(rawAB);
-                    var chRaw=[];
-                    len=data.length/2;
-                    // console.log('len='+len);
-
-
-
-                    for(i=0,j=0;i<len;i++,j+=2){
-                        chRaw.push([i,raw.getInt16(j)]);
-                        // console.log(j);
-                    }
-
-
-                    $.plot('.main-plot', [chRaw]);
-                    setTimeout(function(){
-                        rawAB=null;
-                        vArray=null;
-                        raw=null;
-                        chRaw=null;
-                     ipc.send('asynchronous-message', 'ping');
-
-                    }, 500);
-
-                });
+            });
         });
-
         dsoCtrl.connect().then(function(){
             ipc.send('asynchronous-message', 'ping');
         });
-
-
-
-        // var d1 = [];
-        // for (var i = 0; i < 14; i += 0.5) {
-        //     d1.push([i, Math.sin(i)]);
-        // }
-
-        // var d2 = [[0, 3], [4, 8], [8, 5], [9, 13]];
-
-        // // A null signifies separate line segments
-
-        // var d3 = [[0, 12], [7, 12], null, [7, 2.5], [12, 2.5]];
-
-        // $.plot('.main-plot', [ d1, d2, d3 ]);
-
-
-
-
-
-
-
-        // var canvas=$('.screen-canvas')[0];
-        // var ctx = canvas.getContext('2d');
-        // var cnt=0;
-
-
-        // dsoCtrl.connect(function(e){
-        //     ipc.send('asynchronous-message', 'ping');
-        // });
-        // ipc.on('picture-data', function(res) {
-        //     dsoCtrl.getSnapshot(function(err,data){
-
-        //         var j,i,k,len=data.length;
-        //         var img=new Uint8Array(data);
-
-        //         console.log('dsoClient.sys.dispData.length='+len);
-        //         for(j=0,i=0;i<len;){
-        //             var r,g,b,pix;
-        //             cnt=(img[i+1]<<8)+img[i];
-        //             //console.log('bcnt='+cnt);
-        //             pix=(img[i+3]<<8)+img[i+2];
-        //             r=(pix & 0x001f)<<3;
-        //             g=(pix & 0x07e0)>>>3;
-        //             b=(pix & 0xf800)>>>8;
-        //             for(k=0;k<cnt;k++){
-        //                 imgDataPong.data[j]=b;
-        //                 imgDataPong.data[j+1]=g;
-        //                 imgDataPong.data[j+2]=r;
-        //                 imgDataPong.data[j+3]=255;
-        //                 j+=4;
-        //             }
-        //             i+=4;
-        //              // console.log('i='+i);
-        //              // console.log('j='+j);
-        //         }
-        //         ctx.putImageData(imgDataPong,0,0);
-        //         //delete img;
-        //         setTimeout(function(){
-        //          ipc.send('asynchronous-message', 'ping');
-        //         }, 50);
-
-        //     });
-        // });
     },
 
     componentWillUnmount: function() {
