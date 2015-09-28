@@ -4,8 +4,9 @@
   "description": "communication with instrument through ethernet or usb",
   "main": "msoDriver/index.js",
   "dependencies": {
-    "es6-promise": "~0.1.1",
     "async": "^1.3.0",
+    "es6-promise": "~0.1.1",
+    "mdns": "^2.2.10",
     "serialport": "^1.7.4",
     "usb-detection": "^1.2.0"
   },

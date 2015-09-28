@@ -60,7 +60,7 @@ var AppChannelMenu = React.createClass({
         //     detachable: false
         // });
         //$('.modal.ch_set').modal('show');
-        if(this.props.chnum=="")
+        if(this.props.chnum==="")
           return;
         var modalSelector=".modal.ch_set."+this.props.chnum;
         var ChSetSelector=".ch_button."+this.props.chnum;
@@ -236,12 +236,12 @@ var AppChannelMenu = React.createClass({
                   <div className={this.state.ModalClass}>
 
                             <div className="ui tertiary inverted fluid top attached segment ">
-                              <h2 className="ui left floated header">
+                              <h3 className="ui left floated header">
                                 <i className="options icon "></i>
                                 <div className="content">
                                   Channel 1 setting
                                 </div>
-                              </h2>
+                              </h3>
                               <div className="ui right floated segment">
                                 <div className={this.state.ChCheckboxClass}>
                                   <input type="checkbox" checked={this.state.ChOnOff}/>
@@ -249,13 +249,14 @@ var AppChannelMenu = React.createClass({
                                 </div>
                               </div>
                             </div>
+
                             <div className="ui tertiary attached segment ch_set_content" >
                               <div className="ui grid">
                                 <div className="ui four column row">
                                   <div className="column">
-                                    <h2 className="ui aligned  header">
+                                    <h3 className="ui aligned  header">
                                       Coupling
-                                    </h2>
+                                    </h3>
                                     <div className="grouped inline fields ">
                                       <div className="field">
                                         <div className={this.state.CouplingCboxName}>
@@ -278,9 +279,9 @@ var AppChannelMenu = React.createClass({
                                     </div>
                                   </div>
                                   <div className="column">
-                                    <h2 className="ui aligned  header">
+                                    <h3 className="ui aligned  header">
                                       Inverted
-                                    </h2>
+                                    </h3>
                                     <div className="grouped inline fields ">
                                       <div className="field">
                                         <div className={this.state.InvertCboxName}>
@@ -297,9 +298,9 @@ var AppChannelMenu = React.createClass({
                                     </div>
                                   </div>
                                   <div className="column">
-                                    <h2 className="ui aligned  header">
+                                    <h3 className="ui aligned  header">
                                       Expand
-                                    </h2>
+                                    </h3>
                                     <div className="grouped inline fields">
                                       <div className="field">
                                         <div className={this.state.ExpandCboxName}>
@@ -316,9 +317,9 @@ var AppChannelMenu = React.createClass({
                                     </div>
                                   </div>
                                   <div className="column">
-                                    <h2 className="ui aligned  header">
+                                    <h3 className="ui aligned  header">
                                       Bandwidth
-                                    </h2>
+                                    </h3>
                                     <div className="grouped inline fields">
                                       <div className="field">
                                         <div className={this.state.BwCboxName}>
@@ -351,13 +352,13 @@ var AppChannelMenu = React.createClass({
                             </div>
 
                             <div className="ui attached segment ch_set_content">
-                              <h2 className="ui center aligned header">
+                              <h3 className="ui center aligned header">
                                   <div className="content">
                                       Probe
                                       <div className="sub header">Manage your preferences</div>
                                   </div>
 
-                              </h2>
+                              </h3>
                               <div className={this.state.AccordionClass}>
                                 <div className="title">
                                   <lable>Select Probe Attenuation</lable>

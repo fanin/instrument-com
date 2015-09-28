@@ -2,7 +2,9 @@ var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
 var ipc = require('ipc');
 var fs = require('fs');
-var dsoClinet;
+
+
+var dsoClinet = require('./index.js');
 
 var dispTestCmd=[
     {prop:"DispOut",arg:""}
@@ -58,9 +60,9 @@ app.on('ready', function() {
         //   });
         // });
   //else{
-        var pictData=fs.readFileSync('./img/DS0001.BMP');
-        console.log("data length="+pictData.length);
-        pictData=pictData.slice(54,pictData.length);
+        // var pictData=fs.readFileSync('./img/DS0001.BMP');
+        // console.log("data length="+pictData.length);
+        // pictData=pictData.slice(54,pictData.length);
         mainWindow.loadUrl('file://' + __dirname + '/index.html');
         ipc.on('asynchronous-message', function(event, arg) {
             console.log(arg);  // prints "ping"

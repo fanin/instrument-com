@@ -86,11 +86,12 @@ var AppMathTab = React.createClass({
       // console.log("this.props.menuState="+this.props.menuState);
           return (
             <div>
-                <div className="ui  basic segment">
-                    <div className="ui two column grid">
+                <div className="ui basic segment">
+                    <div className="ui two column relaxed grid">
+
                       <div className="column" >
                           <div className="ui  menu">
-                              <div className="ui center aligned fluid dropdown header item source1">
+                              <div className="ui center aligned fluid dropdown item source1">
                                 {this.state.source1Ch}
                                 <div className="menu">
                                   <a className="item math_tab source1 ch1">CH1</a>
@@ -102,12 +103,15 @@ var AppMathTab = React.createClass({
                           </div>
                       </div>
 
-                      <div className="ui vertical divider">
-                        <p>&nbsp;</p>
-                      </div>
+
+                        <div className="ui vertical divider">
+                          +
+                        </div>
+
+
                       <div className="column">
                           <div className="ui menu">
-                              <div className="ui center aligned fluid dropdown header item source2">
+                              <div className="ui center aligned fluid dropdown item source2">
                                 {this.state.source2Ch}
                                 <div className="menu">
                                   <a className="item math_tab source2 ch1">CH1</a>
@@ -118,14 +122,14 @@ var AppMathTab = React.createClass({
                               </div>
                           </div>
                       </div>
+
                     </div>
                 </div>
-                <div className=" ui  segment" >
-                    <AppDoubleKnob ch_class="ui none" chnum="" fgcolor="#222" bgcolor="#ffffff" KnobAligned="HORIZONTAL_ALIGNED" />
-                </div>
-                <div  style={this.state.MathOperatorStyle}>
-                  <a className="ui red circular label " onClick={this.mathOperatorHandler}>+</a>
-                </div>
+
+                <AppDoubleKnob ch_class="ui mini inverted yellow circular button op_button OP" chnum="OP" fgcolor="#222" bgcolor="#ffffff" KnobAligned="HORIZONTAL_ALIGNED" />
+
+
+
                 <div  style={this.state.OperatorMenuStyle} id="math_operator">
                   <div className="ui vertical buttons" >
                     <div className="ui button opPlus" onClick={this.opPlusClick}>+</div>

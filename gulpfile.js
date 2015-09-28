@@ -15,7 +15,7 @@ var gulp       = require('gulp'),
 
 var LIB_PATH   = './',
     APP_NAME   = path.basename(__dirname),
-    APP_ENTRY  = './test/platform/atom/js/app.jsx',
+    APP_ENTRY  = './test/js/app.jsx',
     OUTPATH    = 'build/',
     DEBUG      = true;
 
@@ -24,19 +24,21 @@ var LIB_PATH   = './',
 var watchSrc=[
         'test/platform/atom/index.html','test/platform/atom/main.js','test/platform/atom/package.json',
         'test/platfom/node/index.html','test/platform/node/server.js','test/platform/node/package.json',
-        'msoDriver/*.*','test/platform/atom/js/**/*.*',
+        'msoDriver/*.*','test/js/**/*.*','test/css/*.css',
         'index.js'
+    ],
+    testSrc = [
+        'test/react/*.*',
+        'test/js/jquery/*.*',
+        'test/js/flot/*.*',
+        'test/img/*.*',
+        'test/semantic/**/*.*',
+        'test/js/jquery.knob.min.js',
     ],
     platformAtomSrc = [
         'test/platform/atom/index.html',
         'test/platform/atom/main.js',
         'test/platform/atom/package.json',
-        'test/platform/atom/react/*.*',
-        'test/platform/atom/js/jquery/*.*',
-        'test/platform/atom/js/flot/*.*',
-        'test/platform/atom/img/*.*',
-        'test/platform/atom/semantic/**/*.*',
-        'test/platform/atom/js/jquery.knob.min.js',
 	    'test/platform/atom/node_modules/**/*.*'
     ],
     platformNodeSrc = [
@@ -71,7 +73,7 @@ gulp.task('build-atom',function() {
     b.pipe(gulp.dest(ATOMOUTPATH + APP_NAME + '/js/'));
 
     /* Build app css bundle */
-    gulp.src('test/platform/atom/css**/*.css')
+    gulp.src('test/css/*.css')
         .pipe(concat('app.min.css'))
         .pipe(minifycss())
         .pipe(gulp.dest(ATOMOUTPATH + APP_NAME + '/css'));
@@ -82,20 +84,47 @@ gulp.task('build-atom',function() {
 
     gulp.src(appSrc,{ base: './' })
         .pipe(gulp.dest(ATOMOUTPATH + APP_NAME));
+
+    gulp.src(testSrc,{ base: 'test/' })
+        .pipe(gulp.dest(ATOMOUTPATH + APP_NAME));
 });
 
 gulp.task('build-node',function() {
+    var b = browserify({
+            entries: [ APP_ENTRY ],
+            paths: [ LIB_PATH ],
+            debug: DEBUG
+        })
+        .transform(reactify)
+        .bundle()
+        .pipe(source('app.min.js'));
+
+    if (!DEBUG)
+        b = b.pipe(buffer()).pipe(uglify());
+
+    b.pipe(gulp.dest(NODEOUTPATH + APP_NAME + '/js/'));
+
+    /* Build app css bundle */
+    gulp.src('test/css/*.css')
+        .pipe(concat('app.min.css'))
+        .pipe(minifycss())
+        .pipe(gulp.dest(NODEOUTPATH + APP_NAME + '/css'));
+
+
     /* Copy rest app resources */
     gulp.src(platformNodeSrc,{ base: NODEBASE })
         .pipe(gulp.dest(NODEOUTPATH + APP_NAME));
 
     gulp.src(appSrc,{ base: './' })
         .pipe(gulp.dest(NODEOUTPATH + APP_NAME));
+
+    gulp.src(testSrc,{ base: 'test/' })
+        .pipe(gulp.dest(NODEOUTPATH + APP_NAME));
 });
 
 
 gulp.task('watch',function(){
-    gulp.watch(watchSrc,['build-node','build-atom']);
+    gulp.watch(watchSrc,['build-node']);
 });
 
 

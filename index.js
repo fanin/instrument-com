@@ -11,6 +11,8 @@ var uitl    = require('util');
 var events  = require('events');
 var path    = require('path');
 var Promise = require('es6-promise').Promise;
+var mdns = require('mdns');
+
 
 var debug = require('debug');
 var log = debug('index:log');
@@ -986,6 +988,59 @@ var _DsoObj = function() {
     return dsoObj;
 };
 
+function findMatchDevice(sample,golden,prop){
+    var i,len=golden.length;
+
+    for(i=0; i<len; i++){
+        var device=golden[i];
+        if(device[prop]){
+            if(sample[prop]===device[prop]){
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+var browser = mdns.createBrowser(mdns.tcp('instrument-dso'));
+var availableNetDevice= [];
+
+browser.on('serviceUp', function(service) {
+  console.log("service up: ", service);
+  if(availableNetDevice.length > 0){
+    var idx;
+
+    idx=findMatchDevice(service,availableNetDevice,"name");
+    if(idx >= 0){
+        availableNetDevice.push(service);
+    }
+  }
+  else{
+    availableNetDevice.push(service);
+  }
+  console.log("-------------");
+
+  console.log(availableNetDevice);
+});
+browser.on('serviceDown', function(service) {
+  console.log("service down: ", service);
+
+  if(availableNetDevice.length > 0){
+    var idx;
+
+    idx=findMatchDevice(service,availableNetDevice,"name");
+    if(idx >= 0){
+        availableNetDevice.splice(idx,1);
+    }
+  }
+  else{
+    availableNetDevice.pop();
+  }
+
+});
+
+browser.start();
+
 /**
 *   The class define all needed public properties and methods
 *
@@ -995,6 +1050,7 @@ var _DsoObj = function() {
 */
 var _DsoCtrl = function(dsoObj) {
     var dsoctrl = {};
+
 
 /**
 *   The method belong to dsoctrl class used to release device's resource.
@@ -1011,6 +1067,12 @@ var _DsoCtrl = function(dsoObj) {
             dsoctrl.disconnect().then(resolve);
         });
     }).bind(dsoObj);
+
+
+// var all_the_types = mdns.browseThemAll();
+
+
+
 
 /**
 *   The method belong to dsoctrl class used to connect to device,
@@ -1839,6 +1901,26 @@ exports.DsoUSB  = function(vid,pid) {
     return _DsoCtrl(dsoObj);
 };
 
+/**
+*   Show available net device.
+*
+*   @method showNetDevice
+*   @return {Array} Array [ {name: , port: , addr: } , ...]
+*
+*/
+exports.showNetDevice = function() {
+    var devInfo=[];
+    var i,len=availableNetDevice.length;
 
+    for(i=0; i<len; i++){
+        var info={};
+
+        info.name = availableNetDevice[i].name;
+        info.port = availableNetDevice[i].port;
+        info.addr = availableNetDevice[i].addresses[1];
+        devInfo.push(info);
+    }
+    return devInfo;
+};
 
 

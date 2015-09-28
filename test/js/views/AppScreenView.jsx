@@ -27,7 +27,7 @@ var AppScreenViewer = React.createClass({
             .on('click', function(event) {
                 console.log($(this).text());
                 if(self.state.RunStopState=='Run'){
-                    dsoCtrl.stop();
+                    // dsoCtrl.stop();
                     self.setState({
                         RunStopState:'Stop',
                         RunStopButtonClass:'mini ui compact negative circular button RunStopButton',
@@ -36,7 +36,7 @@ var AppScreenViewer = React.createClass({
                     });
                 }
                 else{
-                    dsoCtrl.run();
+                    // dsoCtrl.run();
                     self.setState({
                         RunStopState:'Run',
                         RunStopButtonClass:'mini ui compact positive circular button RunStopButton',
@@ -47,7 +47,7 @@ var AppScreenViewer = React.createClass({
             });
         $('.Autoset')
             .on('click', function(event) {
-                dsoCtrl.autoset();
+                // dsoCtrl.autoset();
                 self.setState({
                     RunStopState:'Run',
                     RunStopButtonClass:'mini ui compact positive circular button RunStopButton',
@@ -57,7 +57,7 @@ var AppScreenViewer = React.createClass({
             });
         $('.Single')
             .on('click', function(event) {
-                dsoCtrl.single();
+                // dsoCtrl.single();
                 self.setState({
                     RunStopState:'Stop',
                     RunStopButtonClass:'mini ui compact negative circular button RunStopButton',
@@ -74,12 +74,13 @@ var AppScreenViewer = React.createClass({
     render: function() {
         return (
             <div>
+
                     <div className='ui attached fitted basic segment'>
                         <div className='ui grid'>
-                            <div className='twelve wide column'>
+                            <div className='left floated ten wide column'>
                                     <AppWaveform dsoctrl={this.props.dsoctrl}/>
                             </div>
-                            <div className='two wide column'>
+                            <div className='right floated two wide column'>
 
                                     <div className='ui fitted segment'></div>
                                     <div className={this.state.RunStopButtonClass}>
@@ -97,27 +98,21 @@ var AppScreenViewer = React.createClass({
                         </div>
                     </div>
 
-                    <div className='ui attached fitted basic segment'>
+                    <div className='ui attached basic segment'>
                         <div className ='ui grid'>
-
-                            <div className=' left floated two wide column' >
-
-                                        <AppDoubleKnob ch_class='ui mini inverted yellow circular button ch_button CH1' chnum='CH1' fgcolor='#f5f500' bgcolor='#222' KnobAligned='VERTICAL_ALIGNED' />
-
+                        <div className ='seven column row'>
+                            <div className='column' >
+                                <AppDoubleKnob ch_class='ui mini inverted yellow circular button ch_button CH1' chnum='CH1' fgcolor='#f5f500' bgcolor='#222' KnobAligned='VERTICAL_ALIGNED' />
                             </div>
 
-
-
-                            <div className='left floated two wide column' >
-
-                                    <AppDoubleKnob ch_class='ui mini inverted blue circular button ch_button CH2' chnum='CH2' fgcolor='#2fd6f5' bgcolor='#222' KnobAligned='VERTICAL_ALIGNED'/>
-
+                            <div className='column' >
+                                <AppDoubleKnob ch_class='ui mini inverted blue circular button ch_button CH2' chnum='CH2' fgcolor='#2fd6f5' bgcolor='#222' KnobAligned='VERTICAL_ALIGNED'/>
                             </div>
 
-                            <div className='right floated two wide column' >
-                                    <AppDoubleKnob ch_class='ui mini inverted circular button hor_button HOR' chnum='HOR' fgcolor='#ffffff' bgcolor='#222' KnobAligned='VERTICAL_ALIGNED'/>
+                            <div className='right floated column' >
+                                <AppDoubleKnob ch_class='ui mini inverted circular button hor_button HOR' chnum='HOR' fgcolor='#ffffff' bgcolor='#222' KnobAligned='VERTICAL_ALIGNED'/>
                             </div>
-
+                        </div>
                         </div>
                     </div>
 

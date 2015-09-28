@@ -39,6 +39,16 @@ var AppDoubleKnob = React.createClass({
 
     },
 
+    inputChange: function(e){
+        console.log(e.nativeEvent.target.value);
+        console.log(e.target);
+        // $('#ch1_position').value = e.nativeEvent.target.value.toString();
+        console.log($('#ch1_position'));
+
+    },
+    mouseWheel: function(e){
+        console.log(e);
+    },
     componentDidMount: function() {
         // $('.modal.ch_set').modal({offset: 0});
         // $('.ch_button').click(function (){
@@ -49,7 +59,26 @@ var AppDoubleKnob = React.createClass({
         //   $('.modal.hor_set').modal('show');
 
         // });
-    },
+
+        // $('.ch1_position_class')
+        //     .on('wheel', function(event) {
+        //         console.log("on wheel !");
+        //         console.log(event);
+        //         console.log(event.currentTarget.value);
+
+        //     })
+        $('.vScale').on('click',function(e){
+            console.log("click");
+            console.log(e);
+        })
+        $('.vScale')
+            .on('wheel', function(event) {
+                console.log("on wheel !");
+                console.log(event);
+                console.log(event.currentTarget.value);
+
+            })
+     },
 
     componentWillUnmount: function() {
 
@@ -138,44 +167,25 @@ var AppDoubleKnob = React.createClass({
         var moadlMenu=<AppChannelMenu ch_class={this.props.ch_class} chnum={this.props.chnum} diviClass={divDiretion}/>;
         return (
                 <div >
-                            <div className="ui mini fitted basic segment">
-                                <div className={positionP}>
-                                    <i className="plus icon button"></i>
-                                </div>
-                                <div className={positionM}>
-                                    <i className="minus icon button"></i>
-                                </div>
-                            </div>
 
-
-                            <div className="ui mini fitted basic segment">
-                                <AppKnob Knob="infinite" def_value="0" angleoffset="0" anglearc="360" fgcolor={this.props.fgcolor} bgcolor={this.props.bgcolor} thickness=".3" stopper="false" displayinput="false" cursor="true" skin="tron"/>
-                            <div style={infiniteKnob_clear}>
-                                <div className="large circular ui  icon button">
-                                  <i className="icon settings"></i>
-                                </div>
-                            </div>
-
-                            </div>
-
-                            {moadlMenu}
-
-                            <div className="ui mini fitted basic segment">
-                                <AppKnob Knob="knob" def_value="0" angleoffset="-120" anglearc="250" fgcolor={this.props.fgcolor} bgcolor={this.props.bgcolor} thickness=".3" stopper="true" displayinput="false" cursor="true" skin="none" />
-                            <div style={Knob_clear}>
-                                <div className="large circular ui  icon button">
-                                  <i className="icon settings"></i>
-                                </div>
-                            </div>
-
-                            </div>
-                        <div className="ui mini fitted basic segment">
-                        <div className={scaleP}>
-                            <i className="plus icon button"></i>
+                        <div className = "ui mini right labeled input">
+                          <input className='ch1_position_class' id='ch1_position' type = "number"  name="v_position" onWheel={this.inputChange} onInput={this.inputChange} defaultValue="5" style={{width:"80"} } />
+                          <div className = "ui basic label">
+                            S
+                          </div>
                         </div>
-                        <div className={scaleM}>
-                            <i className="minus icon button"></i>
-                        </div>
+
+                        {moadlMenu}
+
+                        <div className="ui small vertical menu" style={{width:"100"}} >
+                          <div className="ui dropdown item">
+                            100mV
+
+                            <div className="menu">
+                              <a className="item vScale">Electronics</a>
+                              <a className="item vScale">Automotive</a>
+                            </div>
+                          </div>
                         </div>
                 </div>
         );
