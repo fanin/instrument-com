@@ -21,8 +21,32 @@ dsoCtrl.connect().then(dsoCtrl.run);
 * [showNetDevice()](#Show avaiable device)
 * [DsoNet(port , address)]
 * [DsoUSB(vid,pid)]
+
 # Methods
 * [.connect()]
+* [.disconnect()]
+* [.syncConfig()]
+* [.enableCh(ch)]
+* [.disableCh(ch)]
+* [.getHorizontal()]
+* [.setHorizontal()]
+* [.getVertical(ch)]
+* [.setVertical(ch)]
+* [.getEdgeTrig()]
+* [.setEdgeTrig()]
+* [.getSnapshot()]
+* [.getRawdata(ch)]
+* [.getMeas(mch)]
+* [.supportedMeasType()]
+* [.setMeas({mch,src1,src2,type})]
+* [.statisticOn()]
+* [.statisticOff()]
+* [.statisticWeight(weight)]
+* [.run()]
+* [.stop()]
+* [.single()]
+* [.autoset()]
+* [.force()]
 * [.closeDev()]
 * 
 
