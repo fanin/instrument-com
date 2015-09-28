@@ -12,15 +12,11 @@ var dsoDriver = require('./index.js');
 dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
 
 // connect to instrument , connect must be done before any operation.
-dsoCtrl.connect(function(e){
-    if(e==undefined){
-      //get Vertical setting 
-      dsoCtrl.getVertical('ch1',function(err,data){
-        console.log(data);
-      });
-    }
-    else{
-        console.log('connet error: '+e);
-    }
-});
+dsoCtrl.connect().then(dsoCtrl.run);
+
 ```
+
+# Methods
+
+* [DsoNet(port , address)](www.google.com)
+
