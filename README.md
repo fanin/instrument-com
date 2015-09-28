@@ -16,7 +16,17 @@ dsoCtrl.connect().then(dsoCtrl.run);
 
 ```
 
-# Methods
 
-* [DsoNet(port , address)](www.google.com)
+# API
+* [showNetDevice()](#Show avaiable device)
+* [DsoNet(port , address)]
+* [DsoUSB(vid,pid)]
+# Methods
+* [.connect()]
+* [.closeDev()]
+* 
+
+## Show avaiable device 
+
+
 
