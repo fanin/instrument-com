@@ -49,34 +49,6 @@ dsoCtrl.connect().then(dsoCtrl.run);
 * [DsoNet( port, address )](#create-new-instance-via-ethernet)
 * [DsoUSB( vid, pid )](#create-new-instance-via-usb)
 
-# Methods
-* [.connect( )]
-* [.disconnect( )]
-* [.syncConfig( )]
-* [.enableCh( ch )]
-* [.disableCh( ch )]
-* [.getHorizontal( )]
-* [.setHorizontal( )]
-* [.getVertical( ch )]
-* [.setVertical( ch )]
-* [.getEdgeTrig( )]
-* [.setEdgeTrig( )]
-* [.getSnapshot( )]
-* [.getRawdata( ch )]
-* [.getMeas( mch )]
-* [.supportedMeasType( )]
-* [.setMeas( { mch, src1, src2, type } ) ]
-* [.statisticOn( )]
-* [.statisticOff( )]
-* [.statisticWeight( weight )]
-* [.run( )]
-* [.stop( )]
-* [.single( )]
-* [.autoset( )]
-* [.force( )]
-* [.closeDev( )]
-* 
-
 ## Show avaiable device  
 Find all instrument-dso service using [mdns](https://www.npmjs.com/package/mdns). When DSO socket server on, you can use showNetDevice() to count available DSO,
 and showNetDevice() will return an array object that store dso's name, port and ip like this
@@ -94,4 +66,71 @@ console.log( dsoCtrl );
 ```
 ## Create new instance via USB
 You can use one of DsoNet() or dsoUSB() to create a new instance but can't use both.
+
+# Methods
+When dsoCtrl object was created, you can use many methods to control device.
+* [.connect( )](#.connect)
+* [.disconnect( )](#.disconnect)
+* [.syncConfig( )](#.syncConfig)
+* [.enableCh( ch )](#.enableCh)
+* [.disableCh( ch )](#.disableCh)
+* [.getHorizontal( )](#.getHorizontal)
+* [.setHorizontal( )](#.setHorizontal)
+* [.getVertical( ch )](#.getVertical)
+* [.setVertical( ch )](#.setVertical)
+* [.getEdgeTrig( )](#.getEdgeTrig)
+* [.setEdgeTrig( )](#.setEdgeTrig)
+* [.getSnapshot( )](#.getSnaphot)
+* [.getRawdata( ch )](#.getRawdata)
+* [.getMeas( mch )](#.getMeas)
+* [.supportedMeasType( )](#.supportedMeasType)
+* [.setMeas( { mch, src1, src2, type } ) ](#.setMeas)
+* [.statisticOn( )](#.statisticOn)
+* [.statisticOff( )](#.statisticOff)
+* [.statisticWeight( weight )](#.statisticWeight)
+* [.run( )](#.run)
+* [.stop( )](#.stop)
+* [.single( )](#.single)
+* [.autoset( )](#.autoset)
+* [.force( )](#.force)
+* [.closeDev( )](#.closeDev)
+
+##.connet
+Connect to device, create a connection to the device, if return with no error, the other methods can be useed
+```js
+// create a new instance and bind to ethernet interface with ip:172.16.5.68 and port:3000
+var dsoCtrl=dsoDriver.DsoNet(3000,'172.16.5.68');
+
+// connect to instrument , connect must be done before any operation.
+dsoCtrl.connect()
+  .then(dsoCtrl.run);
+```
+##.disconnect
+Disconnect from device, if nothing else to do, disconnect from the device.
+```js
+  dsoCtrl.dsiconnect().then(dsoCtrl.closeDev);
+```
+##.syncConfig
+##.enableCh
+##.disableCh
+##.getHorizontal
+##.setHorizontal
+##.getVertical
+##.setVertical
+##.getEdgeTrig
+##.setEdgeTrig
+##.getSnaphot
+##.getRawdata
+##.getMeas
+##.supportedMeasType
+##.setMeas
+##.statisticOn
+##.statisticOff
+##.statisticWeight
+##.run
+##.stop
+##.single
+##.autoset
+##.force
+##.closeDev
 
