@@ -21,7 +21,7 @@ function Method(id) {
         get:function(prop, res, callback) {
                         var self=this;
                         if (this.gdsType === '') {
-                            callback('error:'+this.gdsType +' not supported');
+                            callback('\''+this.gdsType +'\' not supported');
                             return;
                         }
 
@@ -84,7 +84,7 @@ function Method(id) {
                         // return;
 
                         if (this.gdsType === '' || this.gdsType === 'undefined') {
-                            callback('error:' + this.gdsType + ' not supported');
+                            callback('\'' + this.gdsType + '\' not supported');
                             return;
                         }
 
@@ -112,11 +112,12 @@ function Method(id) {
 
 
                         if (rangeLimit.parameter_type === 'string') {
+
                             if (checkParameterString(arg, rangeLimit.parameter)) {
                                 cmd +=' '+arg+'\r\n';
                             }else {
-                                if (typeof callback === 'function')
-                                    callback(['error',arg+' argument not support',cmd]);
+                                if (callback)
+                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                         }
@@ -138,16 +139,16 @@ function Method(id) {
                                 }
                             }
                             if (i >= rangeLimit.parameter.length) {
-                                if (typeof callback === 'function')
-                                    callback(['error',arg + ' argument not support',cmd]);
+                                if (callback)
+                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                         }else if (rangeLimit.parameter_type === 'parameter_free') {
                             cmd += '\r\n';
                         }else if (rangeLimit.parameter_type === 'int_value') {
                             if (isNaN(arg)) {
-                                if (typeof callback === 'function')
-                                    callback(['error',arg + ' argument not support',cmd]);
+                                if (callback)
+                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                             var val = parseInt(arg,10);
@@ -155,8 +156,8 @@ function Method(id) {
                         }else {
                             // float_value type use readback to check limitation
                             if (isNaN(arg)) {
-                                if (typeof callback === 'function')
-                                    callback(['error',arg+' argument not support',cmd]);
+                                if (callback)
+                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                             var fval = parseFloat(arg);
@@ -193,7 +194,7 @@ function Method(id) {
                         log('cmd set =' + cmd);
                         if (this.write(cmd)) {
                             self[id].cmdHandler[prop].setHelper(self[id],arg);
-                            if (typeof callback === 'function') {
+                            if (callback) {
                                 log('cmd set done');
                                 callback(null);
                             }
@@ -201,7 +202,7 @@ function Method(id) {
                             this.net.socket.once('drain', function() {
                                 this.write(cmd);
                                 self[id].cmdHandler[prop].setHelper(self[id],arg);
-                                if(typeof callback === 'function'){
+                                if(callback){
                                     callback(null);
                                 }
                             });

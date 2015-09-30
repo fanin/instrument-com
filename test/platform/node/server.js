@@ -25,8 +25,24 @@ process.on('exit', function(code) {
 //     console.log(dsoDriver.showNetDevice());
 // },1000);
 
-// dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
-
+dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
+dsoCtrl.connect()
+    .then(dsoCtrl.run)
+    .then(function(){
+        dsoCtrl.setHorizontal({ position:'2.000E-04',
+                                scale:'2.0E-04'
+                            })
+            .then(function(){
+                console.log('done');
+            })
+            .catch(function(err){
+                console.log('catch error: '+err);
+            })
+    })
+    .then(dsoCtrl.stop)
+    .catch(function(){
+        console.log('dsoCtrl error');
+    });
 // dsoCtrl.connect()
 //     .then(dsoCtrl.run)
 //     .then(function(){

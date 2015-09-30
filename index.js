@@ -18,7 +18,7 @@ var debug = require('debug');
 var log = debug('index:log');
 var info = debug('index:info');
 var error = debug('index:error');
-var sytConstant=require('.//msoDriver/sysConstant.js');
+var sysConstant=require('./msoDriver/sysConstant.js');
 var syscmd = require('./msoDriver/system.js');
 var trigcmd = require('./msoDriver/trigger.js');
 var acqcmd = require('./msoDriver/acquire.js');
@@ -26,8 +26,8 @@ var horcmd = require('./msoDriver/horizontal.js');
 var mathcmd = require('./msoDriver/math.js');
 var meascmd = require('./msoDriver/measure.js');
 var channel = require('./msoDriver/channel.js');
-    // usbDev = require('./msoDriver/devUsb.js');
-var usbDev = require('./msoDriver/devUsbFs.js');
+var usbDev = require('./msoDriver/devUsb.js');
+
 var supportType = ['GDS2000E'];
 //
 
@@ -619,7 +619,7 @@ var Dso = function() {
     this.cmdSequence = [];
     this.writeTimeoutObj = null;
     this.asyncWrite = 'done';
-    this.errHandler = function(){};
+    this.errHandler = null;
     this.write = function(data) {
         if (this.interf === 'usb') {
             this.usb.write(data);
@@ -826,6 +826,10 @@ Dso.prototype.tcpConnect = function(Callback) {
     var err_string;
     var self = this;
 
+    if(self.state.conn==='connected'){
+        Callback();
+        return;
+    }
     this.net.socket = net.connect( this.net.port, this.net.host_addr, function() { //'connect' listener
                       log('connected to server!');
                       //dsoObj.net.socket.setEncoding('utf8');
@@ -933,6 +937,7 @@ Dso.prototype.cmd_write = function(cmdSequence) {
                 self[item.id].prop.get(item.prop, item.arg, done);
             }
         },function(err, results) {
+            log('err: '+err);
             self.asyncWrite = 'done';
             self.state.conn = 'connected';
             log('async write done');
@@ -1088,7 +1093,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function conn(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1149,10 +1154,10 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function reload(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
-                    chCmd[chCmd.length-1].cb = reload;
+
                     resolve();
                 }
 
@@ -1198,7 +1203,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function rawData(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve(self.hor);
@@ -1218,6 +1223,77 @@ var _DsoCtrl = function(dsoObj) {
             self.emit('cmd_write', cmd);
         });
     }).bind(dsoObj);
+/**
+*   The method belong to dsoctrl class used to set horizontal properties to device,
+*   like time division, position .. etc.
+*
+*   @method setHorizontal
+*   @param {Object} horProperty
+*
+*/
+/**
+*   Horizontal property of device.
+*
+*   @property horProperty
+*   @type Object
+*   @param {String} position Specify the distance with triggered pointer of the main window
+*   @param {String} zposition Specify the distance with triggered pointer of the zoom window
+*   @param {String} scale Specify the time divison of the main window
+*   @param {String} zscale Specify the time divison of the zoom window
+*   @param {String} mode Specify which mode device on
+*   @param {String} expand Specify timebase expand by center or trigger position
+*/
+    dsoctrl.setHorizontal = (function(hor) {
+        // this.GetSnapshot(callback);
+        var self = this;
+
+        return new Promise(function(resolve, reject) {
+            var cmd=[];
+            function rawData(e){
+                if (e) {
+                    reject(Error(e));
+
+                }else {
+                    resolve();
+                }
+
+            };
+            if(hor === undefined){
+                log('setHorizontal do nothing');
+                resolve();
+            }
+            if(hor.position!==undefined){
+                cmd.push({id:'hor',prop:'HorPosition',arg:hor.position,cb:null,method:'set'});
+
+            }
+            if(hor.zposition!==undefined){
+                cmd.push({id:'hor',prop:'HorZoomPosition',arg:hor.zposition,cb:null,method:'set'});
+            }
+            if(hor.scale!==undefined){
+                cmd.push({id:'hor',prop:'HorScale',arg:hor.scale,cb:null,method:'set'});
+            }
+            if(hor.zscale!==undefined){
+                cmd.push({id:'hor',prop:'HorZoomScale',arg:hor.zscale,cb:null,method:'set'});
+            }
+            if(hor.mode!==undefined){
+                cmd.push({id:'hor',prop:'HorMode',arg:hor.mode,cb:null,method:'set'});
+            }
+            if(hor.expand!==undefined){
+                cmd.push({id:'hor',prop:'HorExpand',arg:hor.expand,cb:null,method:'set'});
+            }
+            if(cmd.length > 0){
+                cmd[cmd.length-1].cb = rawData;
+                self.cmdSequence = self.cmdSequence.concat(cmd);
+                // log(self.cmdSequence);
+                self.emit('cmd_write', cmd);
+            }
+            else{
+                log('setHorizontal do nothing');
+                resolve();
+            }
+        });
+    }).bind(dsoObj);
+
 
 /**
 *   The method belong to dsoctrl class used to load vertical properties from device,
@@ -1248,13 +1324,14 @@ var _DsoCtrl = function(dsoObj) {
     dsoctrl.getVertical = (function(ch) {
         // this.GetSnapshot(callback);
         var self = this;
-        var chNum = sytConstant.chID[ch];
+        var chNum = sysConstant.chID[ch];
         var chCmd;
+
 
         return new Promise(function(resolve, reject) {
             function vetical(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     chCmd[chCmd.length-1].cb = null;
@@ -1262,7 +1339,9 @@ var _DsoCtrl = function(dsoObj) {
                 }
 
             };
-            if(chNum < this.maxChNum) {
+            log('chNum ='+chNum);
+            log('maxChNum ='+self.maxChNum);
+            if(chNum < self.maxChNum) {
                 chCmd = chanLoadCmd[chNum].slice(0);
                 chCmd[chCmd.length-1].cb = vetical;
                 self.cmdSequence = self.cmdSequence.concat(chCmd);
@@ -1286,13 +1365,13 @@ var _DsoCtrl = function(dsoObj) {
     dsoctrl.enableCh = (function(ch) {
         // this.GetSnapshot(callback);
         var self = this;
-        var chNum = sytConstant.chID[ch];
+        var chNum = sysConstant.chID[ch];
         var chCmd;
 
         return new Promise(function(resolve, reject) {
             function chstate(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     chCmd[chCmd.length-1].cb = null;
@@ -1324,13 +1403,13 @@ var _DsoCtrl = function(dsoObj) {
     dsoctrl.disableCh = (function(ch) {
         // this.GetSnapshot(callback);
         var self = this;
-        var chNum = sytConstant.chID[ch];
+        var chNum = sysConstant.chID[ch];
         var chCmd;
 
         return new Promise(function(resolve, reject) {
             function chstate(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     chCmd[chCmd.length-1].cb = null;
@@ -1366,7 +1445,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function snapshot(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve(self.sys.dispData);
@@ -1397,14 +1476,14 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function rawData(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve(self[ch].rawdata);
                 }
 
             };
-            if(sytConstant.chID[ch] !== undefined){
+            if(sysConstant.chID[ch] !== undefined){
                 var cmd=[
                         {id:'acq',prop:'AcqHeader',arg:'OFF',cb:null,method:'set'},
                         {id:ch,prop:'AcqMemory',arg:'',cb:rawData,method:'get'}
@@ -1413,7 +1492,7 @@ var _DsoCtrl = function(dsoObj) {
                 self.emit('cmd_write', cmd);
 
             }else {
-                reject(Error("error"));
+                reject(Error("error null parameter"));
             }
         });
     }).bind(dsoObj);
@@ -1456,7 +1535,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function edgeTrig(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve(self.trig);
@@ -1512,7 +1591,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function measCmd(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve(self[mCh]);
@@ -1586,7 +1665,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function measCmd(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1631,7 +1710,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function measCmd(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1659,7 +1738,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function statistic(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1688,7 +1767,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function statistic(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1716,7 +1795,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysRun(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1743,7 +1822,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysStop(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1771,7 +1850,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysSingle(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1799,7 +1878,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysAutoset(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
@@ -1827,7 +1906,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysForce(e){
                 if (e) {
-                    reject(Error("error"));
+                    reject(Error(e));
 
                 }else {
                     resolve();
