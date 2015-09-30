@@ -112,25 +112,48 @@ Disconnect from device, if nothing else to do, disconnect from the device.
 ```
 ##.syncConfig
 ##.enableCh
+Turn remote DSO's channel on
 ##.disableCh
+Turn remote DSO's channel off
 ##.getHorizontal
+Return current remote DSO's horizontal system setting
 ##.setHorizontal
+Setup remote DSO's horizontal system
 ##.getVertical
+Return current remote DSO's vertical system setting
 ##.setVertical
+Setup remote DSO's vertical system
 ##.getEdgeTrig
+Retrun current remote DSO's edge trigger setting
 ##.setEdgeTrig
+Setup remote DSO's edge trigger
 ##.getSnaphot
+Return an RLE buffer that store screen data displayed on remote DSO
 ##.getRawdata
+Return sampled value, each two int8 bytes encodes the vertical data of a data point, and store in big endian format
 ##.getMeas
+Return measurement value for selected measurement source
 ##.supportedMeasType
+Return suppoted measurement type
 ##.setMeas
+Setup measurement type for selected measurement source
 ##.statisticOn
+Turn statistic measure on for all measurement source
 ##.statisticOff
+Turn statistic measure off for all measurement source
 ##.statisticWeight
+Setup statistic weighting
 ##.run
+Turn remote DSO into run state
 ##.stop
+Turn remote DSO into stop state
 ##.single
+Turn remote DSO into single state
 ##.autoset
+Turn remote DSO into autoset state
 ##.force
+Turn remote DSO into force state
 ##.closeDev
+Close opened device
+
 
