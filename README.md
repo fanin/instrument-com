@@ -75,7 +75,7 @@ When dsoCtrl object was created, you can use many methods to control device.
 * [.enableCh( ch )](#enablech)
 * [.disableCh( ch )](#disablech)
 * [.getHorizontal( )](#gethorizontal)
-* [.setHorizontal( )](#sethorizontal)
+* [.setHorizontal( hor )](#sethorizontal)
 * [.getVertical( ch )](#getvertical)
 * [.setVertical( ch )](#setvertical)
 * [.getEdgeTrig( )](#getedgetrig)
@@ -157,7 +157,23 @@ The meaning of the return object
 * prop: never mind
 
 ##.setHorizontal
-Setup remote DSO's horizontal system
+setHorizontal( _hor_ ), setup remote DSO's horizontal system, _hor_ is an object that include position,zposition,scale,zscale,mode,expand. You can pass parameter only you care
+```js
+dsoCtrl.connect()
+    .then(function(){
+        dsoCtrl.setHorizontal({ position:'2.000E-04', scale:'2.0E-04'})
+            .then(function(){
+                console.log('done');
+            })
+            .catch(function(err){
+                console.log('catch error: '+err);
+            })
+    })
+    .then(dsoCtrl.stop)
+    .catch(function(){
+        console.log('dsoCtrl error');
+    });
+```
 ##.getVertical
 Return current remote DSO's vertical system setting
 ```js
