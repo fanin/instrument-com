@@ -174,6 +174,7 @@ dsoCtrl.connect()
         console.log('dsoCtrl error');
     });
 ```
+![setHor](https://github.com/fanin/instrument-com/tree/master/doc/img/setHor.PNG)
 ##.getVertical
 Return current remote DSO's vertical system setting
 ```js
