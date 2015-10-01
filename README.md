@@ -259,4 +259,35 @@ Turn remote DSO into force state
 ##.closeDev
 Close opened device
 
+#Error Message
+You can use promise catch method to catch error message
+```js
+dsoCtrl.connect()
+    .then(function(){
+        dsoCtrl.setHorizontal({ position:'-1E7',
+                                scale:'2.0E-04'
+                            })
+            .then(function(){
+                console.log('done');
+            })
+            .catch(function(err){
+                console.log(err);
+            })
+    })
+```
+Console displayed information
+```js
+[ '-500',
+  '\'-1e+7\' argument does not accept, set to near one -5.000E+01\n' ]
+
+```
+Array[0] show error type 
+
+* -100 : Parameter Error
+* -200 : Execution Error
+* -300 : Device-specific Error
+* -400 : Query Error
+* -500 : Parameter Not Accept
+
+Array[1] show error message
 
