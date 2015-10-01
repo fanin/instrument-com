@@ -157,7 +157,9 @@ The meaning of the return object
 * prop: never mind
 
 ##.setHorizontal
-setHorizontal( _hor_ ), setup remote DSO's horizontal system, _hor_ is an object that include position,zposition,scale,zscale,mode,expand. You can pass parameter only you care
+setHorizontal( _hor_ ), setup remote DSO's horizontal system, _hor_ is an object that include position,zposition,scale,zscale,mode,expand. Those parameter have some limitation.
+
+You can pass parameter only you care
 ```js
 dsoCtrl.connect()
     .then(function(){
@@ -174,7 +176,9 @@ dsoCtrl.connect()
         console.log('dsoCtrl error');
     });
 ```
-![setHor](https://github.com/fanin/instrument-com/tree/master/doc/img/setHor.PNG)
+We set the position to 200us and set the scale to 200us
+![setHor](doc/img/setHor.PNG)
+
 ##.getVertical
 Return current remote DSO's vertical system setting
 ```js
