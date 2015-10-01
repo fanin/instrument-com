@@ -56,7 +56,7 @@ Channel.prototype.cmdHandler = {
                             chObj.position = arg.toString();
                             if (chObj.temp !== parseFloat(arg)) {
                                 if (cb)
-                                    cb(['error',chObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                    cb(['-500','\''+chObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                 return false;
                             }
                             return true;
@@ -122,7 +122,7 @@ Channel.prototype.cmdHandler = {
                             chObj.deskew = arg.toString();
                             if (chObj.temp !== parseFloat(arg)) {
                                 if (cb)
-                                    cb(['error',chObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                    cb(['-500','\''+chObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                 return false;
                             }
 

@@ -21,7 +21,7 @@ function Method(id) {
         get:function(prop, res, callback) {
                         var self=this;
                         if (this.gdsType === '') {
-                            callback('\''+this.gdsType +'\' not supported');
+                            callback('-300','\''+this.gdsType +'\' not supported');
                             return;
                         }
 
@@ -84,7 +84,7 @@ function Method(id) {
                         // return;
 
                         if (this.gdsType === '' || this.gdsType === 'undefined') {
-                            callback('\'' + this.gdsType + '\' not supported');
+                            callback('-300','\'' + this.gdsType + '\' not supported');
                             return;
                         }
 
@@ -117,7 +117,7 @@ function Method(id) {
                                 cmd +=' '+arg+'\r\n';
                             }else {
                                 if (callback)
-                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
+                                    callback(['-100','\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                         }
@@ -140,7 +140,7 @@ function Method(id) {
                             }
                             if (i >= rangeLimit.parameter.length) {
                                 if (callback)
-                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
+                                    callback(['-100','\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                         }else if (rangeLimit.parameter_type === 'parameter_free') {
@@ -148,7 +148,7 @@ function Method(id) {
                         }else if (rangeLimit.parameter_type === 'int_value') {
                             if (isNaN(arg)) {
                                 if (callback)
-                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
+                                    callback(['-100','\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                             var val = parseInt(arg,10);
@@ -157,7 +157,7 @@ function Method(id) {
                             // float_value type use readback to check limitation
                             if (isNaN(arg)) {
                                 if (callback)
-                                    callback(['\''+arg+'\' argument not supported','cmd '+cmd]);
+                                    callback(['-100','\''+arg+'\' argument not supported','cmd '+cmd]);
                                 return;
                             }
                             var fval = parseFloat(arg);

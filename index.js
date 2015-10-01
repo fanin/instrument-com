@@ -1093,7 +1093,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function conn(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1154,7 +1154,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function reload(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
 
@@ -1203,7 +1203,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function rawData(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve(self.hor);
@@ -1223,6 +1223,7 @@ var _DsoCtrl = function(dsoObj) {
             self.emit('cmd_write', cmd);
         });
     }).bind(dsoObj);
+
 /**
 *   The method belong to dsoctrl class used to set horizontal properties to device,
 *   like time division, position .. etc.
@@ -1251,7 +1252,7 @@ var _DsoCtrl = function(dsoObj) {
             var cmd=[];
             function rawData(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1260,7 +1261,13 @@ var _DsoCtrl = function(dsoObj) {
             };
             if(hor === undefined){
                 log('setHorizontal do nothing');
-                resolve();
+                reject(['-100','Parameter Error']);
+            }
+            if(hor.scale!==undefined){
+                cmd.push({id:'hor',prop:'HorScale',arg:hor.scale,cb:null,method:'set'});
+            }
+            if(hor.zscale!==undefined){
+                cmd.push({id:'hor',prop:'HorZoomScale',arg:hor.zscale,cb:null,method:'set'});
             }
             if(hor.position!==undefined){
                 cmd.push({id:'hor',prop:'HorPosition',arg:hor.position,cb:null,method:'set'});
@@ -1268,12 +1275,6 @@ var _DsoCtrl = function(dsoObj) {
             }
             if(hor.zposition!==undefined){
                 cmd.push({id:'hor',prop:'HorZoomPosition',arg:hor.zposition,cb:null,method:'set'});
-            }
-            if(hor.scale!==undefined){
-                cmd.push({id:'hor',prop:'HorScale',arg:hor.scale,cb:null,method:'set'});
-            }
-            if(hor.zscale!==undefined){
-                cmd.push({id:'hor',prop:'HorZoomScale',arg:hor.zscale,cb:null,method:'set'});
             }
             if(hor.mode!==undefined){
                 cmd.push({id:'hor',prop:'HorMode',arg:hor.mode,cb:null,method:'set'});
@@ -1305,7 +1306,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 */
 /**
-*   Channel property of device.
+*   Channel property
 *
 *   @property chProperty
 *   @type Object
@@ -1315,6 +1316,7 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} bandwidth
 *   @param {String} expand
 *   @param {String} state
+*   @param {String} scale
 *   @param {String} position
 *   @param {String} deskew
 *   @param {String} rawdata
@@ -1328,10 +1330,11 @@ var _DsoCtrl = function(dsoObj) {
         var chCmd;
 
 
+
         return new Promise(function(resolve, reject) {
             function vetical(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     chCmd[chCmd.length-1].cb = null;
@@ -1341,6 +1344,10 @@ var _DsoCtrl = function(dsoObj) {
             };
             log('chNum ='+chNum);
             log('maxChNum ='+self.maxChNum);
+            if(chNum === undefined){
+                reject(['-100','Parameter Error']);
+            }
+
             if(chNum < self.maxChNum) {
                 chCmd = chanLoadCmd[chNum].slice(0);
                 chCmd[chCmd.length-1].cb = vetical;
@@ -1352,7 +1359,101 @@ var _DsoCtrl = function(dsoObj) {
             }
         });
     }).bind(dsoObj);
+/**
+*   The method belong to dsoctrl class used to setup vertical properties to device,
+*   like scale, position .. etc.
+*
+*   @method setVertical
+*   @param {Object} chProperty Specify all channel parameter
+*
+*/
+/**
+*   Channel property
+*
+*   @property chProperty
+*   @type Object
+*   @param {String} coupling Specify coupling on AC,DC or GND
+*   @param {String} impedance Specify the impedance of the analog channel
+*   @param {String} invert
+*   @param {String} bandwidth
+*   @param {String} expand
+*   @param {String} scale
+*   @param {String} state
+*   @param {String} position
+*   @param {String} deskew
+*   @param {String} rawdata
+*   @param {String} probe.unit
+*   @param {String} probe.atten
+*/
+    dsoctrl.setVertical = (function(chProp) {
+        // this.GetSnapshot(callback);
+        var self = this;
+        var chNum = sysConstant.chID[chProp.ch];
+        var cmd=[];
 
+
+        return new Promise(function(resolve, reject) {
+            function vertical(e){
+                if (e) {
+                    reject(Error(e));
+
+                }else {
+                    resolve(self[chProp.ch]);
+                }
+
+            };
+            log('chNum ='+chNum);
+            log('maxChNum ='+self.maxChNum);
+
+            if(chNum === undefined){
+                reject(['-100','Parameter Error']);
+                return;
+            }
+            if(chProp.coupling!==undefined){
+                cmd.push({id:chProp.ch,prop:'COUPling',arg:chProp.coupling,cb:null,method:'set'});
+            }
+            if(chProp.impedance!==undefined){
+                cmd.push({id:chProp.ch,prop:'IMPedance',arg:chProp.impedance,cb:null,method:'set'});
+            }
+            if(chProp.invert!==undefined){
+                cmd.push({id:chProp.ch,prop:'INVert',arg:chProp.invert,cb:null,method:'set'});
+            }
+            if(chProp.bandwidth!==undefined){
+                cmd.push({id:chProp.ch,prop:'BWLimit',arg:chProp.bandwidth,cb:null,method:'set'});
+            }
+            if(chProp.expand!==undefined){
+                cmd.push({id:chProp.ch,prop:'VerEXPand',arg:chProp.expand,cb:null,method:'set'});
+            }
+            if(chProp.scale!==undefined){
+                cmd.push({id:chProp.ch,prop:'VerSCALe',arg:chProp.scale,cb:null,method:'set'});
+            }
+            if(chProp.position!==undefined){
+                cmd.push({id:chProp.ch,prop:'VerPOSition',arg:chProp.position,cb:null,method:'set'});
+            }
+            if(chProp.probe!==undefined){
+                if(chProp.probe.unit!==undefined){
+                    cmd.push({id:chProp.ch,prop:'PROBe_Type',arg:chProp.probe.unit,cb:null,method:'set'});
+                }
+                if(chProp.probe.atten!==undefined){
+                    cmd.push({id:chProp.ch,prop:'PROBe_RATio',arg:chProp.probe.atten,cb:null,method:'set'});
+                }
+            }
+
+            if(chProp.deskew!==undefined){
+                cmd.push({id:chProp.ch,prop:'DESKew',arg:chProp.probe.deskew,cb:null,method:'set'});
+            }
+            if(cmd.length > 0){
+                cmd[cmd.length-1].cb = vertical;
+                self.cmdSequence = self.cmdSequence.concat(cmd);
+                // log(self.cmdSequence);
+                self.emit('cmd_write', cmd);
+            }
+            else{
+                log('setVertical do nothing');
+                resolve();
+            }
+        });
+    }).bind(dsoObj);
 
 /**
 *   The method belong to dsoctrl class used to turn selected channel on

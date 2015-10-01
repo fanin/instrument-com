@@ -93,7 +93,7 @@ MathObj.prototype.cmdHandler={
                                 MathObj.dual.scale=arg.toString();
                                 if(MathObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',MathObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+MathObj.temp.toExponential()+'\' argument does not accepte set to near one'+arg]);
                                     return false;
                                 }
                                 return true;
@@ -109,7 +109,7 @@ MathObj.prototype.cmdHandler={
                                 MathObj.dual.position=arg.toString();
                                 if(MathObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',MathObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+MathObj.temp.toExponential()+'\' argument does not accepte set to near one'+arg]);
                                     return false;
                                 }
                                 return true;
@@ -159,7 +159,7 @@ MathObj.prototype.cmdHandler={
                                 MathObj.fft.verPosition=arg.toString();
                                 if(MathObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',MathObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+MathObj.temp.toExponential()+'\' argument does not accepte set to near one'+arg]);
                                     return false;
                                 }
                                 return true;
@@ -175,7 +175,7 @@ MathObj.prototype.cmdHandler={
                                 MathObj.fft.verScale=arg.toString();
                                 if(MathObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',MathObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+MathObj.temp.toExponential()+'\' argument does not accepte set to near one'+arg]);
                                     return false;
                                 }
                                 return true;
@@ -191,7 +191,7 @@ MathObj.prototype.cmdHandler={
                                 MathObj.fft.horPosition=arg.toString();
                                 if(MathObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',MathObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+MathObj.temp.toExponential()+'\' argument does not accepte set to near one'+arg]);
                                     return false;
                                 }
                                 return true;
@@ -207,7 +207,7 @@ MathObj.prototype.cmdHandler={
                                 MathObj.fft.horScale=arg.toString();
                                 if(MathObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',MathObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+MathObj.temp.toExponential()+'\' argument does not accepte set to near one'+arg]);
                                     return false;
                                 }
                                 return true;

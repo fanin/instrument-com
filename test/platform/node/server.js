@@ -29,14 +29,17 @@ dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
 dsoCtrl.connect()
     .then(dsoCtrl.run)
     .then(function(){
-        dsoCtrl.setHorizontal({ position:'2.000E-04',
-                                scale:'2.0E-04'
+        dsoCtrl.setVertical({
+                                position:'-2.0E-2',
+                                scale:'2.0E-02',
                             })
             .then(function(){
                 console.log('done');
             })
             .catch(function(err){
-                console.log('catch error: '+err);
+
+                console.log(err);
+
             })
     })
     .then(dsoCtrl.stop)

@@ -150,7 +150,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.holdoff=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -196,7 +196,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.delay.time=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -222,7 +222,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.delay.level=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -248,7 +248,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.pulsewidth.when=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -264,7 +264,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.pulsewidth.time=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -291,7 +291,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.pulserunt.when=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -307,7 +307,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.pulserunt.time=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -323,7 +323,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.level=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',TrigObj.temp.toExponential()+' argument doesnot accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -339,7 +339,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.pulserunt.lowLevel=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -365,7 +365,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.risefall.when=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -381,7 +381,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.risefall.time=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -477,7 +477,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.timeout.when=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -494,7 +494,7 @@ TriggerObj.prototype.cmdHandler={
                                 TrigObj.timeout.time=arg.toString();
                                 if(TrigObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+TrigObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;

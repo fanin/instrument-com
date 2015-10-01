@@ -25,7 +25,7 @@ HorObj.prototype.cmdHandler={
                                 HorObj.position=arg.toString();
                                 if(HorObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',HorObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+HorObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
@@ -41,7 +41,7 @@ HorObj.prototype.cmdHandler={
                                 HorObj.zposition=arg.toString();
                                 if(HorObj.temp != parseFloat(arg)){
                                     if(typeof cb=== 'function')
-                                        cb(['error',HorObj.temp.toExponential()+' argument does not accepte set to near one'+arg]);
+                                        cb(['-500','\''+HorObj.temp.toExponential()+'\' argument does not accept, set to near one '+arg]);
                                     return false;
                                 }
                                 return true;
