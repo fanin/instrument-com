@@ -157,7 +157,9 @@ The meaning of the return object
 * prop: never mind
 
 ##.setHorizontal
-setHorizontal( _hor_ ), setup remote DSO's horizontal system, _hor_ is an object that include position,zposition,scale,zscale,mode,expand. You can pass parameter only you care
+setHorizontal( _hor_ ), setup remote DSO's horizontal system, _hor_ is an object that include position,zposition,scale,zscale,mode,expand. Those parameter have some limitation.
+
+You can pass parameter only you care
 ```js
 dsoCtrl.connect()
     .then(function(){
@@ -174,6 +176,9 @@ dsoCtrl.connect()
         console.log('dsoCtrl error');
     });
 ```
+We set the position to 200us and set the scale to 200us
+![setHor](doc/img/setHor.PNG)
+
 ##.getVertical
 Return current remote DSO's vertical system setting
 ```js
@@ -254,4 +259,35 @@ Turn remote DSO into force state
 ##.closeDev
 Close opened device
 
+#Error Message
+You can use promise catch method to catch error message
+```js
+dsoCtrl.connect()
+    .then(function(){
+        dsoCtrl.setHorizontal({ position:'-1E7',
+                                scale:'2.0E-04'
+                            })
+            .then(function(){
+                console.log('done');
+            })
+            .catch(function(err){
+                console.log(err);
+            })
+    })
+```
+Console displayed information
+```js
+[ '-500',
+  '\'-1e+7\' argument does not accept, set to near one -5.000E+01\n' ]
+
+```
+Array[0] show error type 
+
+* -100 : Parameter Error
+* -200 : Execution Error
+* -300 : Device-specific Error
+* -400 : Query Error
+* -500 : Parameter Not Accept
+
+Array[1] show error message
 
