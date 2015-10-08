@@ -41,12 +41,13 @@ var AppSideBar = React.createClass({
                     self.setState({activeItem:<div className='ui mini circular red button math_ctrl_mini' onClick={this.mathHandler}></div>});
                     $('.math_ctrl').hide();
                 }
+
                 self.setState({
                     mathCtrlSta:changeSta,
                     trigCtrlSta:false,
                     searchCtrlSta:false,
                     busCtrlSta:false,
-                    sideBarMenuStyle:{display:display},
+                    sideBarMenuStyle:{display:display}
                 });
             });
         $('.search_ctrl')
@@ -96,24 +97,21 @@ var AppSideBar = React.createClass({
                     <div className={this.props.iConGridClass}>
                     <div className={this.props.iConColumeClass}>
 
+                            <div className='circular ui icon button green trig_ctrl'>
+                              <i className='text width icon'></i>
+                            </div>
+
                             <div className='circular ui icon button red math_ctrl'>
-                              <i className='icon settings'></i>
+                              <i className='line chart icon'></i>
                             </div>
-
-
-                            <div className='circular ui icon button yellow search_ctrl'>
-                              <i className='icon photo'></i>
-                            </div>
-
 
                             <div className='circular ui icon button purple bus_ctrl'>
-                              <i className='icon settings'></i>
+                              <i className='bold icon'></i>
                             </div>
 
-                            <div className='circular ui icon button green trig_ctrl'>
-                              <i className='icon settings'></i>
+                            <div className='circular ui icon button yellow search_ctrl'>
+                              <i className='search icon'></i>
                             </div>
-
                     </div>
                     </div>
 

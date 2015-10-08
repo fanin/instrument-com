@@ -4,7 +4,7 @@ var AppNavBar         = require('./AppNavBar.jsx');
 var AppSideBar        = require('./AppSideBar.jsx');
 var AppScreenViewer   = require('./AppScreenView.jsx');
 var AppFooter         = require('./AppFooter.jsx');
-
+var AppChCtrl         = require('./AppChCtrl.jsx');
 // var remote = electronRequire('remote');
 // var dsoDriver = remote.require('./index.js');
 
@@ -16,6 +16,9 @@ var AppMainView = React.createClass({
         return {
             listComponent:{},
             devList:[],
+            connClass:'circular ui icon red inverted button connDev findDev',
+            connSta:'findDev',
+            connIcon:'unlink icon',
             dsoCtrl:null,
             disabled: true,
             greetingsExtentionLoaded: false,
@@ -42,36 +45,74 @@ var AppMainView = React.createClass({
 
     componentDidMount: function() {
         var _this = this;
-        $('.button.findDev')
+        var dsoId;
+        $('.button.connDev')
             .on('click', function(event) {
-                $.get("/dso",null,function(data){
-                    var i,j,k,len=data.length;
-                    var child_i=[];
-                    var listRoot={};
+                if($('.button.connDev').hasClass('findDev')){
+                    // _this.setState({
+                    //                 connClass:'circular ui icon red button connDev closeDev',
+                    //                 connSta:'closeDev',
+                    //                 connIcon:'unlink icon',
+                    //             });
+                    console.log("findDev");
+                    $.get("/dso",null,function(data){
+                        var i,j,k,len=data.length;
+                        var child_i=[];
+                        var listRoot={};
 
 
-                    for(i=0; i<len; i++){
-                        var child_j = {}, child_k = {}, child_m = {}, component = {};
-                        var devInfo = data[i].name;
+                        for(i=0; i<len; i++){
+                            var child_j = {}, child_k = {}, child_m = {}, component = {};
+                            var devInfo = data[i].name;
 
-                        child_m = React.createElement('div', {className: "header"}
-                                    ,devInfo);
-                        child_k = React.createElement('div', {className: "content"}
-                                    ,child_m);
-                        child_j = React.createElement('div', {className: "item"}
-                                    ,child_k);
-                        // component = React.addons.createFragment({div:child_j});
-                        child_i.push(child_j);
-                        _this.state.devList.push(data[i]);
+                            child_m = React.createElement('div', {className: "header"}
+                                        ,devInfo);
+                            child_k = React.createElement('div', {className: "content"}
+                                        ,child_m);
+                            child_j = React.createElement('div', {className: "item"}
+                                        ,child_k);
+                            // component = React.addons.createFragment({div:child_j});
+                            child_i.push(child_j);
+                            _this.state.devList.push(data[i]);
 
-                    }
-                    console.log(data);
-                    listRoot = React.createElement('div', {className: "ui middle aligned selection list"},child_i);
-                    _this.setState({listComponent:listRoot});
+                        }
+                        console.log(data);
+                        listRoot = React.createElement('div', {className: "ui middle aligned selection list"},child_i);
+                        _this.setState({listComponent:listRoot});
 
-                    $('.ui.modal.findDev')
-                        .modal('show');
-                });
+                        $('.ui.modal.findDev')
+                            .modal('show');
+                    });
+                }
+                else{
+                    dsoId = _this.state.dsoCtrl;
+                     _this.setState({dsoCtrl:null});
+                     setTimeout(function(){
+                        $.ajax({
+                            url: '/dso',
+                            dataType: 'html',
+                            type: 'DELETE',
+                            data: {id:dsoId.id},
+                            success: function(data) {
+                                console.log('success');
+                                console.log("dsoCtrl="+_this.state.dsoCtrl);
+                                _this.setState({
+                                    dsoCtrl:null,
+                                    connClass:'circular ui icon red inverted button connDev findDev',
+                                    connSta:'findDev',
+                                    connIcon:'unlink icon',
+                                });
+                            },
+                            error: function(xhr, status, err) {
+                                console.log('error')
+                                console.log("dsoCtrl="+_this.state.dsoCtrl);
+                                _this.setState({dsoCtrl:null});
+                            }
+                        });
+                    },500);
+
+                    console.log('closeDev');
+                }
             });
 
         $('.selection.list')
@@ -89,9 +130,21 @@ var AppMainView = React.createClass({
                               type: 'POST',
                               data: {port:_this.state.devList[i].port, addr: _this.state.devList[i].addr},
                               success: function(data) {
+                                // var res = JSON.parse(data);
                                 console.log('success');
                                 console.log(data);
-                                _this.setState({dsoCtrl:data});
+                                console.log(data.setting);
+                                var lrn= data.setting.data;
+
+                                // console.log(lrn.length);
+                                // console.log(lrn);
+                                console.log(data.setting.data);
+                                _this.setState({
+                                    dsoCtrl:data,
+                                    connClass:'circular ui icon green inverted button closeDev',
+                                    connSta:'closeDev',
+                                    connIcon:'linkify icon',
+                                });
                               }.bind(this),
                               error: function(xhr, status, err) {
                                 console.log('error')
@@ -104,10 +157,7 @@ var AppMainView = React.createClass({
                 $('.ui.modal.findDev')
                     .modal('hide');
             });
-
-
     },
-
     componentWillUnmount: function() {
 
         msoStore.removeChangeListener(this._onReceiveMessage);
@@ -126,23 +176,28 @@ var AppMainView = React.createClass({
                 <div className='ui grid'>
 
                     <div className='three wide column'>
+                        <div className={this.state.connClass}>
+                          <i className={this.state.connIcon}></i>
+                        </div>
+                        <div className='circular ui right floated icon yellow inverted button defaultDev'>
+                          Default
+                        </div>
+                        <p></p>
 
-                        <div className='circular ui icon button red findDev'>
-                          <i className='icon settings'></i>
-                        </div>
-                        <div className='circular ui icon button green closeDev'>
-                          <i className='icon settings'></i>
-                        </div>
                         <div className='ui modal findDev'>
                             {this.state.listComponent}
                         </div>
+
+                        <AppChCtrl />
+
 
 
                         <AppSideBar iConGridClass='ui grid' iConColumeClass='one wide column' dsoctrl={this.state.dsoCtrl}/>
                     </div>
 
-                    <div className='ten wide left aligned column'>
-                        <AppScreenViewer dsoctrl={this.state.dsoCtrl}/>
+
+                    <div className='eleven wide left aligned column'>
+                        <AppScreenViewer dsoctrl={this.state.dsoCtrl} />
                     </div>
 
                 </div>

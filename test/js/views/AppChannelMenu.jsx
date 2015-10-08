@@ -184,29 +184,29 @@ var AppChannelMenu = React.createClass({
             },
 
           });
-        $(ChOnOffSelector)
-          .checkbox({
-            onChecked: function(){
-              //console.log("ChOnOffSelector onChecked");
-              $(modalSelector).modal('hide');
-              $('.ch_set_content').show();
-              $(modalSelector).modal('show');
-            },
-            onUnchecked: function(){
-              //console.log("ChOnOffSelector onUnChecked");
-                $('.ch_set_content').hide();
-            },
-            onChange: function(){
-              console.log("ChOnOffSelector onChange");
-            }
-          });
+        // $(ChOnOffSelector)
+        //   .checkbox({
+        //     onChecked: function(){
+        //       //console.log("ChOnOffSelector onChecked");
+        //       $(modalSelector).modal('hide');
+        //       $('.ch_set_content').show();
+        //       $(modalSelector).modal('show');
+        //     },
+        //     onUnchecked: function(){
+        //       //console.log("ChOnOffSelector onUnChecked");
+        //         $('.ch_set_content').hide();
+        //     },
+        //     onChange: function(){
+        //       console.log("ChOnOffSelector onChange");
+        //     }
+        //   });
           $(AccordionSelector)
             .accordion()
           ;
 
-          if(this.state.ChOnOff===''){
-            $('.ch_set_content').hide();
-          }
+          // if(this.state.ChOnOff===''){
+          //   $('.ch_set_content').hide();
+          // }
         // console.log("probeselector:"+probeSelector);
         // console.log("onChange:"+CoupCboxSelector);
 
@@ -231,7 +231,7 @@ var AppChannelMenu = React.createClass({
     render: function() {
 
         return (
-                <div className="ui fitted basic segment">
+                <div >
                   <div className={this.props.diviClass}>
                     <div className={this.props.ch_class}>
                       {this.props.chnum}
@@ -240,23 +240,16 @@ var AppChannelMenu = React.createClass({
                   <div className={this.state.ModalClass}>
 
 
-                              <h3 className="ui header">
+                              <div className="ui header">
                                 <i className="options icon "></i>
                                 <div className="content">
                                     <div className='ui four wide column'>
                                       <div className='ui left floated column'>
                                         Channel 1 setting
                                       </div>
-                                      <div className='ui right floated column'>
-                                        <div className={this.state.ChCheckboxClass}>
-                                          <input type="checkbox" checked={this.state.ChOnOff}/>
-                                          <label>Channel On</label>
-                                        </div>
-                                      </div>
-
                                     </div>
                                 </div>
-                              </h3>
+                              </div>
 
 
                             <div className="content">
@@ -700,12 +693,12 @@ var AppChannelMenu = React.createClass({
                                   </div>
                                 </div>
                               </div>
-
-                              <div className="ui  bottom attached segment">
-                                  <div className="ui blue submit button" type="submit">Submit</div>
-                                  <div className="ui blue submit button" type="submit">Cancel</div>
-                              </div>
                             </div>
+                            <div className="actions">
+                              <div className="ui approve button">Approve</div>
+                              <div className="ui cancel button">Cancel</div>
+                            </div>
+
 
 
                   </div>

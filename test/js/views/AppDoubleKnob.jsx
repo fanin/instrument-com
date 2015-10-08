@@ -31,53 +31,117 @@ var KnobStepPclass ={
         CH3:"mini ui inverted red icon button scale CH3Minus",
         CH4:"mini ui inverted green icon button scale CH4Minus",
         HOR:"mini ui inverted icon button scale HorMinus"
+    },
+    knobClassInfo ={
+        CH1:"ch1Knob",
+        CH2:"ch2Knob",
+        CH3:"ch3Knob",
+        CH4:"ch4Knob",
+        HOR:"horKnob"
     };
+var self;
 var AppDoubleKnob = React.createClass({
-
+    getInitialState: function() {
+        return {
+            keyValue: 0,
+            ChOnOff:'',
+            unitIcon:'users icon'
+        };
+    },
 
     componentWillMount: function() {
 
     },
 
-    inputChange: function(e){
+    inputChangePos: function(e){
         console.log(e.nativeEvent.target.value);
-        console.log(e.target);
-        // $('#ch1_position').value = e.nativeEvent.target.value.toString();
-        console.log($('#ch1_position'));
+        console.log(e.target.id);
 
+        // $('#ch1_position').value = e.nativeEvent.target.value.toString();
+        var inputId ='#'+ e.target.id;
+        var val = parseFloat($(inputId).val());
+
+        // $('#CH1').val(100);
+        console.log($(inputId).val());
+        console.log(inputId);
+        $(inputId)[0].step = 10;
+        $(inputId).val(val);
+        console.log($(inputId));
+    },
+    inputChangeScal:function(e){
+        var inputId ='#'+ e.target.id;
+        var val = parseFloat($(inputId).val());
+
+        console.log(e.nativeEvent.target.value);
+        console.log(inputId);
+        console.log();
+        if(val > 12){
+            $(inputId).val(12);
+        }
+        else if(val < 0){
+            $(inputId).val(0);
+        }
+        $('.shape.scale').shape('flip down');
     },
     mouseWheel: function(e){
         console.log(e);
     },
     componentDidMount: function() {
-        // $('.modal.ch_set').modal({offset: 0});
-        // $('.ch_button').click(function (){
-        //   $('.modal.ch_set').modal('show');
+        self = this;
 
+
+        $('.dropdown.scale')
+            .dropdown({
+                on: 'hover'
+            });
+
+        // $('.ui.menu .dropdown')
+        //       .dropdown({
+        //         delay: {
+        //           show  : 100,
+        //           hide  : 300,
+        //           touch : 50
+        //         },
+        //         transition: 'drop',
+        //         // onChange:function(value, text, $choice){
+        //         //   console.log(value);
+        //         // },
+        //         on: 'hover'
+        //       });
+        //   });
+
+
+        // $('.ch1Knob').knob({
+        //     'min': 0,
+        //     'max': 50,
+        //     'step':2,
+        //     'width':50,
+        //     'angleArc':180,
+        //     'angleOffset':90,
+
+        //     'thickness': '.5',
+        //     'release': function (v) {
+        //         console.log('release value = '+v);
+        //      },
+        //     'change' : function (v) {
+        //         console.log('knob value = '+v);
+
+        //     }
         // });
-        // $('.hor_button').click(function (){
-        //   $('.modal.hor_set').modal('show');
+        // $('.toggle.checkbox')
+        //     .checkbox({
+        //         onChecked: function(){
+        //           console.log("toggle.checkbox onChecked");
 
-        // });
+        //         },
+        //         onUnchecked: function(){
+        //           console.log("toggle.checkbox onUnChecked");
 
-        // $('.ch1_position_class')
-        //     .on('wheel', function(event) {
-        //         console.log("on wheel !");
-        //         console.log(event);
-        //         console.log(event.currentTarget.value);
-
-        //     })
-        $('.vScale').on('click',function(e){
-            console.log("click");
-            console.log(e);
-        })
-        $('.vScale')
-            .on('wheel', function(event) {
-                console.log("on wheel !");
-                console.log(event);
-                console.log(event.currentTarget.value);
-
-            })
+        //         },
+        //         onChange: function(){
+        //           console.log("toggle.checkbox onChange");
+        //         }
+        //     });
      },
 
     componentWillUnmount: function() {
@@ -92,7 +156,7 @@ var AppDoubleKnob = React.createClass({
         // },
         // DownStyle={
         //     position:"relative",
-        //     left:"0px",
+        //     left:"0px
         //     top:"0px"
         // },
         // VerticalKnobStyle={
@@ -115,26 +179,26 @@ var AppDoubleKnob = React.createClass({
         //     width:"300px",
         //     margin:"auto"
         // };
-        var verInfiniteKnobClear={
-            position:"absolute",
-            left:"30px",
-            top:"30px"
-        },
-        verKnobClearl={
-            position:"absolute",
-            left:"25px",
-            top:"25px"
-        },
-        horInfiniteKnobClear={
-            position:"absolute",
-            left:"30px",
-            top:"30px"
-        },
-        horKnobClear={
-            position:"absolute",
-            left:"25px",
-            top:"25px"
-        };
+        // var verInfiniteKnobClear={
+        //     position:"absolute",
+        //     left:"30px",
+        //     top:"30px"
+        // },
+        // verKnobClearl={
+        //     position:"absolute",
+        //     left:"25px",
+        //     top:"25px"
+        // },
+        // horInfiniteKnobClear={
+        //     position:"absolute",
+        //     left:"30px",
+        //     top:"30px"
+        // },
+        // horKnobClear={
+        //     position:"absolute",
+        //     left:"25px",
+        //     top:"25px"
+        // };
 
 
         if(this.props.chnum !="")
@@ -143,12 +207,15 @@ var AppDoubleKnob = React.createClass({
             // var PosKnobStyle=UpStyle;
             // var KnobGroupStyle=VerticalKnobStyle;
             var divDiretion="ui horizontal  divider";
-            var infiniteKnob_clear=verInfiniteKnobClear;
-            var Knob_clear=verKnobClearl;
-            var positionP=iKnobStepPclass[this.props.chnum];
-            var positionM=iKnobStepMclass[this.props.chnum];
-            var scaleP=KnobStepPclass[this.props.chnum];
+
+
+            // var infiniteKnob_clear=verInfiniteKnobClear;
+            // var Knob_clear=verKnobClearl;
+            // var positionP=iKnobStepPclass[this.props.chnum];
+            // var positionM=iKnobStepMclass[this.props.chnum];
+            // var scaleP=KnobStepPclass[this.props.chnum];
             var scaleM=KnobStepMclass[this.props.chnum];
+            var knobClass = knobClassInfo[this.props.chnum];
 
         }
         else
@@ -157,36 +224,47 @@ var AppDoubleKnob = React.createClass({
             // var PosKnobStyle=RightStyle;
             // var KnobGroupStyle=horKnobStyle;
             var divDiretion="ui none";
-            var infiniteKnob_clear=horInfiniteKnobClear;
-            var Knob_clear=horKnobClear;
-            var positionP="mini ui icon button";
-            var positionM="mini ui icon button";
-            var scaleP="mini ui icon button";
-            var scaleM="mini ui icon button";
+
+            // var infiniteKnob_clear=horInfiniteKnobClear;
+            // var Knob_clear=horKnobClear;
+            // var positionP="mini ui icon button";
+            // var positionM="mini ui icon button";
+            // var scaleP="mini ui icon button";
+            // var scaleM="mini ui icon button";
         }
         var moadlMenu=<AppChannelMenu ch_class={this.props.ch_class} chnum={this.props.chnum} diviClass={divDiretion}/>;
+        console.log('render bouble knob');
+                        // <div className="ui fluid search selection dropdown scale">
+                        //   <input type="hidden" name="country" />
+                        //   <i className="dropdown icon"></i>
+                        //   <div className="default text">Select Country</div>
+                        //   <div className="menu">
+                        //       <div className="item" data-value="af"><i className="af flag"></i>Afghanistan</div>
+                        //       <div className="item" data-value="ax"><i className="ax flag"></i>Aland Islands</div>
+                        //       <div className="item" data-value="al"><i className="al flag"></i>Albania</div>
+                        //       <div className="item" data-value="dz"><i className="dz flag"></i>Algeria</div>
+                        //   </div>
+                        // </div>
         return (
                 <div >
 
-                        <div className = "ui mini right labeled input">
-                          <input className='ch1_position_class' id='ch1_position' type = "number"  name="v_position" onWheel={this.inputChange} onInput={this.inputChange} defaultValue="5" style={{width:"80"} } />
-                          <div className = "ui basic label">
-                            S
-                          </div>
+                        <div className = "ui mini input">
+                            <input id={this.props.chnum+'pos'} type = "number"  name="h_position" onWheel={this.inputChangePos} onInput={this.inputChangePos} defaultValue='0' style={{width:"80"} }/>
                         </div>
 
+                        <div className="ui left pointing label">
+                            Position
+                        </div>
                         {moadlMenu}
-
-                        <div className="ui small vertical menu" style={{width:"100"}} >
-                          <div className="ui dropdown item">
-                            100mV
-
-                            <div className="menu">
-                              <a className="item vScale">Electronics</a>
-                              <a className="item vScale">Automotive</a>
-                            </div>
-                          </div>
+                        <div className = "ui mini input">
+                            <input id={this.props.chnum+'scale'} type = "number"  name="v_scale" onWheel={this.inputChangeScal} onInput={this.inputChangeScal} defaultValue='0' style={{width:"80"} } />
                         </div>
+
+                        <div className="ui left pointing label">
+                            Scale
+                        </div>
+
+
                 </div>
         );
     },

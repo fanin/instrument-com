@@ -1148,7 +1148,7 @@ var _DsoCtrl = function(dsoObj) {
 *
 */
     dsoctrl.syncConfig = (function() {
-        var chCmd = [];
+        var cmd = [];
         var self = this;
 
         return new Promise(function(resolve, reject) {
@@ -1158,21 +1158,15 @@ var _DsoCtrl = function(dsoObj) {
 
                 }else {
 
-                    resolve();
+                    resolve(self.sys.lrn);
                 }
 
             };
-            self.cmdSequence = self.cmdSequence.concat(acqLoadCmd);
-            self.cmdSequence = self.cmdSequence.concat(trigLoadCmd);
-            self.cmdSequence = self.cmdSequence.concat(horLoadCmd);
-            for(var i = 0; i < self.maxChNum; i++) {
-                chCmd = chanLoadCmd[i].slice(0);
-                self.cmdSequence = self.cmdSequence.concat(chCmd);
-            }
-            chCmd[chCmd.length-1].cb = reload;
-            // self.cmdSequence[self.cmdSequence.length-1].cb = reload;
-            // log(self.cmdSequence);
-            self.emit('cmd_write', self.cmdSequence);
+            var cmd = [
+                    {id:'sys', prop:'LRN', arg:'', cb:reload, method:'get'}
+                ];
+            self.cmdSequence = self.cmdSequence.concat(cmd);
+            self.emit('cmd_write', cmd);
         });
     }).bind(dsoObj);
 
@@ -1395,7 +1389,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function vertical(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve(self[chProp.ch]);
@@ -1466,30 +1460,31 @@ var _DsoCtrl = function(dsoObj) {
     dsoctrl.enableCh = (function(ch) {
         // this.GetSnapshot(callback);
         var self = this;
-        var chNum = sysConstant.chID[ch];
-        var chCmd;
 
         return new Promise(function(resolve, reject) {
             function chstate(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
-                    chCmd[chCmd.length-1].cb = null;
-                    resolve(self[ch]);
+                    resolve();
                 }
 
             };
 
             var chid = ch.toLowerCase();
-            if( (chid !== 'ch1') || (chid !== 'ch2') || (chid !== 'ch3') || (chid !== 'ch4')){
-                reject(Error("parameter error"));
+            if( (chid === 'ch1') || (chid === 'ch2') || (chid === 'ch3') || (chid === 'ch4')){
+                var cmd = [
+                        {id:chid, prop:'ChState', arg:'ON', cb:chstate, method:'set'}
+                    ];
+                self.cmdSequence = self.cmdSequence.concat(cmd);
+                self.emit('cmd_write', cmd);
             }
-            var cmd = [
-                    {id:ch, prop:'ChState', arg:'ON', cb:chstate, method:'set'}
-                ];
-            self.cmdSequence = self.cmdSequence.concat(cmd);
-            self.emit('cmd_write', cmd);
+            else{
+                reject(Error("parameter error"));
+                return;
+            }
+
         });
     }).bind(dsoObj);
 
@@ -1504,30 +1499,34 @@ var _DsoCtrl = function(dsoObj) {
     dsoctrl.disableCh = (function(ch) {
         // this.GetSnapshot(callback);
         var self = this;
-        var chNum = sysConstant.chID[ch];
-        var chCmd;
 
         return new Promise(function(resolve, reject) {
             function chstate(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
-                    chCmd[chCmd.length-1].cb = null;
-                    resolve(self[ch]);
+                    resolve();
                 }
 
             };
-
+            console.log('disableCh cmd');
+            console.log(ch);
             var chid = ch.toLowerCase();
-            if( (chid !== 'ch1') || (chid !== 'ch2') || (chid !== 'ch3') || (chid !== 'ch4')){
-                reject(Error("parameter error"));
+            console.log('disableCh cmd toLowerCase');
+            console.log(chid);
+            if( (chid === 'ch1') || (chid === 'ch2') || (chid === 'ch3') || (chid === 'ch4')){
+                var cmd = [
+                        {id:chid, prop:'ChState', arg:'OFF', cb:chstate, method:'set'}
+                    ];
+                self.cmdSequence = self.cmdSequence.concat(cmd);
+                self.emit('cmd_write', cmd);
             }
-            var cmd = [
-                    {id:ch, prop:'ChState', arg:'OFF', cb:chstate, method:'set'}
-                ];
-            self.cmdSequence = self.cmdSequence.concat(cmd);
-            self.emit('cmd_write', cmd);
+            else{
+                reject(Error("parameter error"));
+                return;
+            }
+
         });
     }).bind(dsoObj);
 
@@ -1546,7 +1545,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function snapshot(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve(self.sys.dispData);
@@ -1577,7 +1576,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function rawData(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve(self[ch].rawdata);
@@ -1623,7 +1622,6 @@ var _DsoCtrl = function(dsoObj) {
 *   @param {String} mode
 *   @param {String} holdoff
 *   @param {String} noise_rej
-*   @param {String} reject
 *   @param {String} level
 *   @param {String} alt
 *   @param {String} state
@@ -1636,7 +1634,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function edgeTrig(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve(self.trig);
@@ -1651,6 +1649,7 @@ var _DsoCtrl = function(dsoObj) {
                     {id:'trig',prop:'TrigCouple',arg:'',cb:null,method:'get'},
                     {id:'trig',prop:'TrigNoiseRej',arg:'',cb:null,method:'get'},
                     {id:'trig',prop:'TrigMode',arg:'',cb:null,method:'get'},
+                    {id:'trig',prop:'TrigALT',arg:'',cb:null,method:'get'},
                     {id:'trig',prop:'TrigHoldoff',arg:'',cb:edgeTrig,method:'get'}
                 ];
             // this.GetRawdata(ch,callback);
@@ -1660,6 +1659,92 @@ var _DsoCtrl = function(dsoObj) {
         });
     }).bind(dsoObj);
 
+
+
+/**
+*   The method belong to dsoctrl class used to set edge trigger properties to device
+*
+*   @method setEdgeTrig
+*   @param {object} trigProperty
+*
+*/
+/**
+*   Trigger property of device.
+*
+*   @property trigProperty
+*   @type Object
+*   @param {String} type
+*   @param {String} source
+*   @param {String} mode
+*   @param {String} holdoff
+*   @param {String} noise_rej
+*   @param {String} level
+*   @param {String} alt
+*   @param {String} edge.coupling
+*   @param {String} edge.slop
+*/
+    dsoctrl.setEdgeTrig = (function(trigProp) {
+        var self = this;
+        var cmd = [];
+
+        return new Promise(function(resolve, reject) {
+            function edgeTrig(e){
+                if (e) {
+                    reject(e);
+
+                }else {
+                    resolve(self.trig);
+                }
+
+            };
+
+            if(trigProp === undefined){
+                reject(['-100','Parameter Error']);
+                return;
+            }
+            cmd.push({id:'trig',prop:'TrigType',arg:'EDGE',cb:null,method:'set'});
+            if(trigProp.source!==undefined){
+                cmd.push({id:'trig',prop:'TrigSource',arg:trigProp.source,cb:null,method:'set'});
+            }
+            if(trigProp.mode!==undefined){
+                cmd.push({id:'trig',prop:'TrigMode',arg:trigProp.mode,cb:null,method:'set'});
+            }
+            if(trigProp.edge!==undefined){
+                if(trigProp.edge.coupling!==undefined){
+                    cmd.push({id:'trig',prop:'TrigCouple',arg:trigProp.edge.coupling,cb:null,method:'set'});
+                }
+                if(trigProp.edge.slop!==undefined){
+                    cmd.push({id:'trig',prop:'TrigEdgeSlop',arg:trigProp.edge.slop,cb:null,method:'set'});
+                }
+            }
+            if(trigProp.holdoff!==undefined){
+                cmd.push({id:'trig',prop:'TrigHoldoff',arg:trigProp.holdoff,cb:null,method:'set'});
+            }
+            if(trigProp.noise_rej!==undefined){
+                cmd.push({id:'trig',prop:'TrigNoiseRej',arg:trigProp.noise_rej,cb:null,method:'set'});
+            }
+            // if(trigProp.reject!==undefined){
+            //     cmd.push({id:'trig',prop:'TrigReject',arg:trigProp.reject,cb:null,method:'set'});
+            // }
+            if(trigProp.level!==undefined){
+                cmd.push({id:'trig',prop:'TrigHighLevel',arg:trigProp.level,cb:null,method:'set'});
+            }
+            if(trigProp.alt!==undefined){
+                cmd.push({id:'trig',prop:'TrigALT',arg:trigProp.alt,cb:null,method:'set'});
+            }
+
+            if(cmd.length > 0){
+                cmd[cmd.length-1].cb = edgeTrig;
+                self.cmdSequence = self.cmdSequence.concat(cmd);
+                // log(self.cmdSequence);
+                self.emit('cmd_write', cmd);
+            }
+            else{
+                log('setVertical do nothing');
+                resolve();
+            }
+        });
+    }).bind(dsoObj);
 
 /**
 *   The method belong to dsoctrl class used to get the measurment properties
@@ -1692,7 +1777,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function measCmd(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve(self[mCh]);
@@ -1766,7 +1851,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function measCmd(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1811,7 +1896,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function measCmd(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1839,7 +1924,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function statistic(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1868,7 +1953,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function statistic(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1896,7 +1981,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysRun(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1923,7 +2008,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysStop(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1951,7 +2036,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysSingle(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -1979,7 +2064,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysAutoset(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();
@@ -2007,7 +2092,7 @@ var _DsoCtrl = function(dsoObj) {
         return new Promise(function(resolve, reject) {
             function sysForce(e){
                 if (e) {
-                    reject(Error(e));
+                    reject(e);
 
                 }else {
                     resolve();

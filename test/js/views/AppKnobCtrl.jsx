@@ -19,8 +19,8 @@ var AppKnob = React.createClass({
             max:24,
             // bgColor:"#222",
             // fgColor:"#ffec03",
-            width:"90",
-            height:"90",
+            width:"70",
+            height:"70",
             change : function (v,cv) {
                 if(v > cv){
                     if(up){

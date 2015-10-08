@@ -25,27 +25,47 @@ process.on('exit', function(code) {
 //     console.log(dsoDriver.showNetDevice());
 // },1000);
 
-dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
-dsoCtrl.connect()
-    .then(dsoCtrl.run)
-    .then(function(){
-        dsoCtrl.setVertical({
-                                position:'-2.0E-2',
-                                scale:'2.0E-02',
-                            })
-            .then(function(){
-                console.log('done');
-            })
-            .catch(function(err){
+// dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
+// dsoCtrl.connect()
+//     .then(function(){
+//         dsoCtrl.syncConfig().then(function(data){
+//             console.log(data);
+//             console.log("==========================");
+//         })
+//     })
+//     .then(function(){dsoCtrl.enableCh('ch1');})
+//     .then(function(){dsoCtrl.enableCh('ch2');})
+//     .then(dsoCtrl.run)
+//     .then(function(){
+//         dsoCtrl.setEdgeTrig({
+//                                 source: 'ch2',
+//                                 mode:'AUTO',
+//                                 level:'1.0E-1',
+//                                 edge:{  coupling:'AC',
+//                                         slop:'FALL'}
+//                             })
+//             .catch(function(err){
 
-                console.log(err);
+//                 console.log(err);
 
-            })
-    })
-    .then(dsoCtrl.stop)
-    .catch(function(){
-        console.log('dsoCtrl error');
-    });
+//             })
+//     })
+//     .then(function(){
+//         dsoCtrl.getEdgeTrig( )
+//             .then(function(res){
+//                 console.log(res);
+//                 console.log('done');
+//             })
+//             .catch(function(err){
+
+//                 console.log(err);
+
+//             })
+//     })
+//     .then(dsoCtrl.stop)
+//     .catch(function(){
+//         console.log('dsoCtrl error');
+//     });
 // dsoCtrl.connect()
 //     .then(dsoCtrl.run)
 //     .then(function(){
@@ -128,36 +148,154 @@ app.use(multer({
 
 
 app.route('/dso')
-    .get(function(req,res){
+    .get(function(req,res,next){
         res.send(dsoDriver.showNetDevice());
 
         console.log('get available net device');
     })
-    .post(function(req,res){
+    .post(function(req,res,next){
         console.log("port");
         console.log(req.body.port);
         console.log("addr");
         console.log(req.body.addr);
         dsoCtrl=dsoDriver.DsoNet(req.body.port,req.body.addr);
         console.log(dsoCtrl);
-        dsoCtrl.connect().then(function(){
-            res.send({id: "gds2102e"});
-        });
+        dsoCtrl.connect()
+            .then(function(){
+                dsoCtrl.syncConfig().then(function(data){
+
+                    res.send({
+                        id: "gds2102e",
+                        setting:data.toString()
+                    });
+                    console.log('post new instaence');
+                })
+
+            })
+            .catch(function(){
+                console.log("connect to dso fail");
+                res.send({id: ""});
+            });
 
 
-        console.log('post new instaence');
+
+    })
+    .delete(function(req,res,next){
+        console.log("delete request");
+        // console.log(req.params.id);
+        console.log(req.body.id);
+        dsoCtrl.closeDev()
+            .then(function(){
+                dsoCtrl=null;
+                res.sendStatus(200);
+            })
+            .catch(function(e){
+                console.log('close device error:'+e[0]);
+                res.sendStatus(406);
+            });
+
     });
 app.route('/dso/screen')
-    .get(function(req,res){
+    .get(function(req,res,next){
         console.log(req.query);
         var dso=req.query.dsoctrl;
         console.log(dso);
-        dsoCtrl.getSnapshot().then(function(data){
-            res.send({data:data});
-        });
+        if(dsoCtrl){
+            dsoCtrl.getSnapshot().then(function(data){
+                res.send({img:data});
+            });
+        }
+        else{
+            res.sendStatus(406);
+        }
         console.log('get snapshot');
     });
+app.route('/dso/runStop')
+    .put(function(req,res,next){
+        console.log(req.query);
 
+
+        console.log(req.body.cmd);
+        if(dsoCtrl){
+            if(req.body.cmd.toUpperCase() === 'RUN'){
+                dsoCtrl.run().then(function(){
+                    res.sendStatus(200);
+                });
+            }
+            else{
+                dsoCtrl.stop().then(function(){
+                    res.sendStatus(200);
+                });
+            }
+        }
+        else{
+            res.sendStatus(406);
+        }
+        console.log('put runstop');
+    });
+app.route('/dso/single')
+    .put(function(req,res,next){
+        console.log(req.query);
+        console.log(req.body.cmd);
+        if(dsoCtrl){
+            dsoCtrl.single().then(function(){
+                res.sendStatus(200);
+            });
+        }
+        else{
+            res.sendStatus(406);
+        }
+        console.log('put runstop');
+    });
+app.route('/dso/autoset')
+    .put(function(req,res,next){
+        console.log(req.query);
+        console.log(req.body.cmd);
+        if(dsoCtrl){
+            dsoCtrl.autoset().then(function(){
+                res.sendStatus(200);
+            });
+        }
+        else{
+            res.sendStatus(406);
+        }
+        console.log('put runstop');
+    });
+
+app.route('/dso/chstate')
+    .put(function(req,res,next){
+        console.log(req.query);
+        console.log(req.body.ch);
+        console.log(req.body.state);
+
+        if(dsoCtrl){
+            if(req.body.state.toUpperCase() === 'ON'){
+                dsoCtrl.enableCh(req.body.ch)
+                    .then(function(){
+                        res.sendStatus(200);
+                    })
+                    .catch(function(e){
+                        console.log(e);
+                        res.sendStatus(406);
+                    });
+            }
+            else{
+                dsoCtrl.disableCh(req.body.ch)
+                    .then(function(){
+                        res.sendStatus(200);
+                    })
+                    .catch(function(e){
+                        console.log(e);
+                        res.sendStatus(406);
+                    });
+            }
+
+        }
+        else{
+            res.sendStatus(406);
+        }
+        console.log('put chstate');
+    });
 // app.route('/uploads/:field/')
 
 //     .post(function(req, res) {

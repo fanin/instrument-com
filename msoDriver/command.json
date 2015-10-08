@@ -155,17 +155,12 @@
     "TrigCouple":{
       "command":":TRIGger:COUPle",
       "parameter_type":"string",
-      "parameter":["DC","AC"]
+      "parameter":["DC","AC","HF","LF"]
     },
     "TrigNoiseRej":{
       "command":":TRIGger:NREJ",
       "parameter_type":"string",
       "parameter":["OFF","ON"]
-    },
-    "TrigReject":{
-      "command":":TRIGger:REJect",
-      "parameter_type":"string",
-      "parameter":["OFF","HF","LF"]
     },
     "TrigMode":{
       "command":":TRIGger:MODe",

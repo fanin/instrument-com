@@ -9,7 +9,7 @@ function TriggerObj(){
     this.mode='AUTO';
     this.holdoff='4E-9';
     this.noise_rej='OFF';
-    this.reject='OFF';
+    // this.reject='OFF';
     this.level='0E+0';
     this.alt='OFF';
     //ARMED indicates that the oscilloscope is acquiring pretrigger information.
@@ -118,17 +118,17 @@ TriggerObj.prototype.cmdHandler={
                                 //return true;
                               }
         },
-        'TrigReject':{
-                    getHandler:function(TrigObj,res,cb){
-                                res=res.slice(0,-1);
-                                TrigObj.reject=res.toString();
-                                return true;
-                              },
-                    setHelper:function(TrigObj,arg,cb){
-                                TrigObj.reject=arg;
-                                //return true;
-                              }
-        },
+        // 'TrigReject':{
+        //             getHandler:function(TrigObj,res,cb){
+        //                         res=res.slice(0,-1);
+        //                         TrigObj.reject=res.toString();
+        //                         return true;
+        //                       },
+        //             setHelper:function(TrigObj,arg,cb){
+        //                         TrigObj.reject=arg;
+        //                         //return true;
+        //                       }
+        // },
         'TrigMode':{
                     getHandler:function(TrigObj,res,cb){
                                 res=res.slice(0,-1);

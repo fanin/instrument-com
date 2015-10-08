@@ -6,11 +6,12 @@ var msoStore          = require('../stores/mso-consoleStore');
 // var remote = electronRequire('remote');
 // var dsoDriver=remote.require('./msoDriver/index.js');
 var imgDataPong= new ImageData(800,480);
-
+var imgScale = new Image();
+var drawTimeObj=null;
 var AppWaveform = React.createClass({
     getInitialState: function() {
         return {
-            screenProc:{},
+            screenProc:null,
             windowElement:{},
             plotStyle:{
                         width:'800',
@@ -128,55 +129,92 @@ var AppWaveform = React.createClass({
         var dsoCtrl=this.props.dsoctrl;
         var canvas=$('.screen-canvas')[0];
         var ctx = canvas.getContext('2d');
-        var cnt=0;
+        var cnt=0,j,i,k,len;
+        var self = this;
+
 
         console.log("dsoctrl obj");
         console.log(dsoCtrl);
+
         if(dsoCtrl){
             // if(screenProc){
             //     clearTimeout(screenProc);
             // }
-            // screenProc=setInterval(function(){
+            if(!drawTimeObj){
+                drawTimeObj=setInterval(function(){
+                    if(self.props.pause !== true ){
+                        $.ajax({
+                              url: '/dso/screen',
+                              dataType: 'json',
+                              type: 'get',
+                              data: {dsoctrl:dsoCtrl.id},
+                              success: function(res) {
+                                console.log(res.img);
+                                var img=new Uint8Array(res.img.data);
 
-                $.ajax({
-                      url: '/dso/screen',
-                      dataType: 'json',
-                      type: 'get',
-                      data: {dsoctrl:dsoCtrl},
-                      success: function(res) {
-                        console.log(res.data);
-                        var j,i,k,len=res.data.data.length;
-                        var img=new Uint8Array(res.data.data);
+                                len=res.img.data.length;
+                                // console.log('dsoClient.sys.dispData.length='+len);
+                                for(j=0,i=0;i<len;){
+                                    var r,g,b,pix;
 
-                        console.log('dsoClient.sys.dispData.length='+len);
-                        for(j=0,i=0;i<len;){
-                            var r,g,b,pix;
+                                    cnt=(img[i+1]<<8)+img[i];
+                                    //console.log('bcnt='+cnt);
+                                    pix=(img[i+3]<<8)+img[i+2];
+                                    r=(pix & 0x001f)<<3;
+                                    g=(pix & 0x07e0)>>>3;
+                                    b=(pix & 0xf800)>>>8;
+                                    for(k=0;k<cnt;k++){
+                                        imgDataPong.data[j]=b;
+                                        imgDataPong.data[j+1]=g;
+                                        imgDataPong.data[j+2]=r;
+                                        imgDataPong.data[j+3]=255;
+                                        j+=4;
+                                    }
+                                    i+=4;
+                                     // console.log('i='+i);
+                                     // console.log('j='+j);
+                                }
+                                ctx.putImageData(imgDataPong,0,0);
+                                // console.log(Window);
+                                // Promise(
+                                //     createImageBitmap(imgDataPong)
+                                //     .then(function (image) { imgScale = image })
+                                // ).then(function(){
+                                //         console.log('drawImage');
+                                //         ctx.scale(0.5,0.5);
+                                //         ctx.drawImage(imgScale, 0, 0);
+                                // });
+                              }.bind(this),
+                              error: function(xhr, status, err) {
+                                console.log('get screen error');
+                                clearInterval(drawTimeObj);
+                                drawTimeObj=null;
+                              }.bind(this)
+                        });
+                    }
+                },100);
+            }
 
-                            cnt=(img[i+1]<<8)+img[i];
-                            //console.log('bcnt='+cnt);
-                            pix=(img[i+3]<<8)+img[i+2];
-                            r=(pix & 0x001f)<<3;
-                            g=(pix & 0x07e0)>>>3;
-                            b=(pix & 0xf800)>>>8;
-                            for(k=0;k<cnt;k++){
-                                imgDataPong.data[j]=b;
-                                imgDataPong.data[j+1]=g;
-                                imgDataPong.data[j+2]=r;
-                                imgDataPong.data[j+3]=255;
-                                j+=4;
-                            }
-                            i+=4;
-                             // console.log('i='+i);
-                             // console.log('j='+j);
-                        }
-                        ctx.putImageData(imgDataPong,0,0);
-                      }.bind(this),
-                      error: function(xhr, status, err) {
-                        console.log('error')
-                      }.bind(this)
-                });
+        }
+        else{
+            if(drawTimeObj){
+                console.log("clear interval");
+                clearInterval(drawTimeObj);
+                drawTimeObj=null;
 
-            // },500);
+
+            }
+            else{
+                console.log('not clear interval');
+            }
+            // len = 800*480*4;
+            // for(i = 0; i < len; i += 4){
+            //     imgDataPong.data[i]=255;
+            //     imgDataPong.data[i+1]=255;
+            //     imgDataPong.data[i+2]=255;
+            //     imgDataPong.data[i+3]=255;
+            // }
+            // ctx.putImageData(imgDataPong,0,0);
         }
     },
 

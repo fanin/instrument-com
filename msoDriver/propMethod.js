@@ -11,7 +11,7 @@ var error = debug('method:error');
 var autosetWaitTimeObj = null;
 function checkParameterString(arg, par) {
     for (var i=0; i<par.length; i++) {
-        if (arg === par[i])
+        if (arg.toUpperCase() === par[i].toUpperCase())
             return true;
     }
     return false;

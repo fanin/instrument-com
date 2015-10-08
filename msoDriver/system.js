@@ -13,6 +13,7 @@ function SysCmd() {
     this.recCount = 0;
     this.staWeight = '2';
     this.staMode =  'OFF';
+    this.lrn = [];
 
 
 }
@@ -27,7 +28,14 @@ SysCmd.prototype.cmdHandler = {
         'LRN':{
                     getHandler:function(sysObj,res,cb){
                                 log(res);
-                                return true;
+
+                                if(res[res.length-1] == 0x0a)
+                                    return true;
+                                else{
+                                    sysObj.lrn = res;
+                                }
+
+                                return false;
                               }
         },
         'RST':{
