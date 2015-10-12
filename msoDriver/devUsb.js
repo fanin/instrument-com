@@ -1,7 +1,7 @@
 'use strict';
 
 
-// var usbDetect = require('usb-detection');
+var usbDetect = require('usb-detection');
 // var usb = require('usb');
 var util=require('util');
 var events=require('events');
@@ -17,7 +17,8 @@ function pairUsb(dsoObj,callback){
     var device=null;
 
     usbPort.list(function (err, ports) {
-        // log(ports);
+        log('usb device ='+ports.length);
+        log(ports);
         log('=====================');
         for(var i=0,len=ports.length;i<len;i++){
             if((ports[i].vendorId==dsoObj.usb.vid)&&(ports[i].productId==dsoObj.usb.pid)){
@@ -93,7 +94,7 @@ exports.BindUsbObj=function(dsoObj,vid,pid){
     dsoObj.interf='usb';
     dsoObj.usb={
         dataHandler:function(data){
-            // log('socket on data event!');
+            log('usbDev on data event!');
 
             if(dsoObj.state.setTimeout){
                 if(dsoObj.state.conn!=='timeout'){
@@ -114,6 +115,7 @@ exports.BindUsbObj=function(dsoObj,vid,pid){
         // usbDev:{},
         device:null,
         onChange:(function(){
+            log('usb onChange event');
             pairUsb(this);
         }).bind(dsoObj),
         write:(function(data){
@@ -139,10 +141,10 @@ exports.BindUsbObj=function(dsoObj,vid,pid){
         // }).bind(dsoObj)
     };
 
-
-
     pairUsb(dsoObj);
     // usbDetect.on('add:'+vid+':'+pid, dsoObj.usb.onChange);
     // usbDetect.on('remove:'+vid+':'+pid, dsoObj.usb.onChange);
+    usbDetect.on('add', dsoObj.usb.onChange);
+    usbDetect.on('remove', dsoObj.usb.onChange);
 }
 

@@ -116,7 +116,15 @@ process.on('exit', function(code) {
 //         dsoCtrl.disableCh('ch2');
 //     });
 
-// dsoCtrl=dsoDriver.DsoUSB(0x2184,0x003f);
+dsoCtrl=dsoDriver.DsoUSB(0x2184,0x003f);
+console.log(dsoCtrl);
+dsoCtrl.connect()
+    .then(function(){
+        dsoCtrl.syncConfig().then(function(data){
+            console.log(data);
+            console.log("==========================");
+        })
+    });
 // dsoUsb=dsoDriver.DsoUSB(0x2204,0x098f);
 
 

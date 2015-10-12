@@ -868,7 +868,7 @@ Dso.prototype.usbConnect = function(Callback) {
     var self = this;
 
     usbDev.openUsb(this, function() {
-            // log(self.usb);
+            log(self.usb);
             // self.usb.onData(self.dataHandler);
             checkDsoExist(self, Callback);
     });
