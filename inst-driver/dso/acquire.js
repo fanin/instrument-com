@@ -1,6 +1,6 @@
 'use strict';
 
-var propMethod = require('./propMethod.js');
+var propMethod = require('../dev/propMethod.js');
 
 function AcqObj(){
     this.temp=0;

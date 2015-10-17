@@ -1,6 +1,6 @@
 'use strict';
 
-var propMethod = require('./propMethod.js');
+var propMethod = require('../dev/propMethod.js');
 
 function TriggerObj(){
     this.temp=0;

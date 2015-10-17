@@ -1,7 +1,7 @@
 {
   "GDS2000E": {
-    "model":["GDS-2072E","GDS-2074E","GDS-2102E","GDS-2104E","GDS-2202E","GDS-2204E"],
-    "maxChNum":{"GDS-2072E":2,"GDS-2074E":4,"GDS-2102E":2,"GDS-2104E":4,"GDS-2202E":2,"GDS-2204E":4},
+    "model":["GDS-2072E","GDS-2074E","GDS-2102E","GDS-2104E","GDS-2202E","GDS-2204E","DCS-2102E"],
+    "maxChNum":{"GDS-2072E":2,"GDS-2074E":4,"GDS-2102E":2,"GDS-2104E":4,"GDS-2202E":2,"GDS-2204E":4,"DCS-2102E":2},
     "BWLimit": {
       "command":[":channel1:bwlimit",":channel2:bwlimit",":channel3:bwlimit",":channel4:bwlimit"],
       "parameter_type":"float_string",

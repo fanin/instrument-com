@@ -34,3 +34,12 @@ var dsoErrCode = {
 };
 
 exports.dsoErrCode = dsoErrCode;
+
+var supportDevice={
+    GDS2002E:{vid:'0x2184',pid:'0x003f',type:'DSO'},
+    DCS2002E:{vid:'0x098f',pid:'0x2204',type:'DSO'},
+    AFG2225:{vid:'0x2184',pid:'0x001C',type:'AFG'}
+};
+
+exports.supportDevice = supportDevice;
+

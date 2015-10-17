@@ -1,6 +1,6 @@
 'use strict';
 
-var chID = require('./sysConstant.js').chID;
+var chID = require('../sys/sysConstant.js').chID;
 var debug = require('debug');
 var log = debug('method:log');
 var info = debug('method:info');
@@ -199,13 +199,20 @@ function Method(id) {
                                 callback(null);
                             }
                         }else {
-                            this.net.socket.once('drain', function() {
-                                this.write(cmd);
-                                self[id].cmdHandler[prop].setHelper(self[id],arg);
+                            if(this.interf === 'net'){
+                                this.net.socket.once('drain', function() {
+                                    this.write(cmd);
+                                    self[id].cmdHandler[prop].setHelper(self[id],arg);
+                                    if(callback){
+                                        callback(null);
+                                    }
+                                });
+                            }
+                            else if(this.interf === 'use'){
                                 if(callback){
-                                    callback(null);
-                                }
-                            });
+                                        callback('use write error');
+                                    }
+                            }
                         }
         }.bind(this)
     };

@@ -1,6 +1,5 @@
 var fs      = require('fs');
 var express = require('express');
-var multer  = require('multer');
 var app     = express();
 var port    =   process.env.PORT || 8088;
 var bodyParser = require('body-parser');
@@ -10,7 +9,7 @@ function done(){
 };
 ////////// Test TCP Socket
 
-var dsoDriver = require('./index.js');
+var instDriver = require('./index.js');
 var dsoCtrl;
 
 
@@ -22,10 +21,10 @@ process.on('exit', function(code) {
 
 // setInterval(function(){
 //     console.log("show net device");
-//     console.log(dsoDriver.showNetDevice());
+//     console.log(instDriver.showNetDevice());
 // },1000);
 
-// dsoCtrl= dsoDriver.DsoNet(3000,'172.16.5.68');
+// dsoCtrl= instDriver.DsoNet(3000,'172.16.5.68');
 // dsoCtrl.connect()
 //     .then(function(){
 //         dsoCtrl.syncConfig().then(function(data){
@@ -115,17 +114,100 @@ process.on('exit', function(code) {
 //     .then(function(){
 //         dsoCtrl.disableCh('ch2');
 //     });
+// var usbDev = instDriver.getUsbDevice();
 
-dsoCtrl=dsoDriver.DsoUSB(0x2184,0x003f);
-console.log(dsoCtrl);
-dsoCtrl.connect()
-    .then(function(){
-        dsoCtrl.syncConfig().then(function(data){
-            console.log(data);
-            console.log("==========================");
-        })
-    });
-// dsoUsb=dsoDriver.DsoUSB(0x2204,0x098f);
+
+setTimeout(function(){
+    var usbDev = instDriver.getUsbDevice();
+
+    console.log("result:");
+    console.log(usbDev);
+
+    if(usbDev.length>0){
+        for(var i=0,len=usbDev.length; i<len; i++){
+            if(parseInt(usbDev[i].productId) === parseInt('0x2204')){
+                console.log('connect to device');
+                instDriver.connectUsbDevice(usbDev[i],function(e,id){
+                    if(e)
+                        console.log(e);
+                    console.log(id);
+
+                    var devDriv=instDriver.getDevDriver(id);
+
+                    if(devDriv === null ){
+                        console.log('device not avaiable');
+                    }
+                    else{
+                        devDriv.run()
+                            .then(function(){
+                                devDriv.getRawdata('ch1')
+                                    .then(function(data){
+                                    console.log(data);
+                                    });
+                            })
+                            .then(function(){
+                                devDriv.getHorizontal()
+                                    .then(function(data){
+                                    console.log(data);
+                                    });
+                            })
+                            .then(function(){
+                                devDriv.getVertical('ch1')
+                                    .then(function(data){
+                                    console.log(data);
+                                    });
+                            })
+                            .then(function(){
+                                devDriv.getSnapshot()
+                                    .then(function(data){
+                                    console.log(data);
+                                    });
+                            })
+                            // .then(devDriv.syncConfig)
+                            .then(function(){
+                                devDriv.supportedMeasType()
+                                    .then(function(data){
+                                    console.log(data);
+                                    });
+                            })
+                            .then(function(){
+                                devDriv.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'})
+                            })
+                            .then(function(){
+                                devDriv.getMeas('meas1')
+                                    .then(function(data){
+                                    console.log(data);
+                                    });
+                            })
+                            .then(devDriv.stop)
+                            .then(function(){
+                                devDriv.disableCh('ch2');
+                            });
+                    }
+
+                });
+                break;
+            }
+        }
+
+    }
+},1000);
+
+// dsoCtrl=instDriver.DsoUSB('0x098f','0x2204');
+// console.log(dsoCtrl);
+// dsoCtrl.connect()
+//     .then(function(){
+//         dsoCtrl.syncConfig().then(function(data){
+//             console.log(data);
+//             console.log("done");
+//             console.log("==========================");
+//         })
+//         .catch(function(err){
+//             cnosole.log(err);
+//         })
+//     });
+
+// dsoUsb=instDriver.DsoUSB(0x2204,0x098f);
 
 
 // get an instance of router
@@ -144,20 +226,10 @@ app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 app.use(express.static(__dirname + '/'));
-app.use(multer({
-            dest: './uploads/',
-    /*
-            onFileUploadComplete: function (file) {
-                                    console.log(file);
-                                  }
-    */
-        })
-);
-
 
 app.route('/dso')
     .get(function(req,res,next){
-        res.send(dsoDriver.showNetDevice());
+        res.send(instDriver.showNetDevice());
 
         console.log('get available net device');
     })
@@ -166,7 +238,7 @@ app.route('/dso')
         console.log(req.body.port);
         console.log("addr");
         console.log(req.body.addr);
-        dsoCtrl=dsoDriver.DsoNet(req.body.port,req.body.addr);
+        dsoCtrl=instDriver.DsoNet(req.body.port,req.body.addr);
         console.log(dsoCtrl);
         dsoCtrl.connect()
             .then(function(){

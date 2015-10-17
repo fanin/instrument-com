@@ -1,6 +1,6 @@
 'use strict';
 
-var propMethod = require('./propMethod.js');
+var propMethod = require('../dev/propMethod.js');
 var debug = require('debug');
 var log = debug('sys:log');
 var info = debug('sys:info');

@@ -24,7 +24,7 @@ var LIB_PATH   = './',
 var watchSrc=[
         'test/platform/atom/index.html','test/platform/atom/main.js','test/platform/atom/package.json',
         'test/platfom/node/index.html','test/platform/node/server.js','test/platform/node/package.json',
-        'msoDriver/*.*','test/js/**/*.*','test/css/*.css',
+        'inst-driver/**/*.*','test/js/**/*.*','test/css/*.css',
         'index.js'
     ],
     testSrc = [
@@ -48,7 +48,7 @@ var watchSrc=[
         'test/platform/node/node_modules/**/*.*',
     ],
     appSrc = [
-        'msoDriver/**/*.*',
+        'inst-driver/**/*.*',
         'index.js'
 
     ];
@@ -128,7 +128,7 @@ gulp.task('watch',function(){
 });
 
 
-gulp.task('default', ['build-node','build-atom','watch']);
+gulp.task('default', ['build-atom','watch']);
 
 // gulp.task('archive', function() {
 //     process.chdir(OUTPATH);

@@ -1,9 +1,9 @@
 'use strict';
 
-var sytConstant = require('./sysConstant.js');
-var propMethod  =  require('./propMethod.js');
+var sytConstant = require('../sys/sysConstant.js');
+var propMethod  =  require('../dev/propMethod.js');
 var util = require('util');
-var debuglog_noisy = util.debuglog('noisy');
+//var debuglog_noisy = util.debuglog('noisy');
 var debug  =  require('debug');
 var log  =  debug('channel:log');
 var info  =  debug('channel:info');
