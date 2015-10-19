@@ -17,181 +17,90 @@ process.on('exit', function(code) {
   console.log('About to exit with code:', code);
 });
 
+// setTimeout(function(){
+//     var usbDev = instDriver.getUsbDevice();
+
+//     console.log("result:");
+//     console.log(usbDev);
+
+//     if(usbDev.length>0){
+//         for(var i=0,len=usbDev.length; i<len; i++){
+//             if(parseInt(usbDev[i].productId) === parseInt('0x2204')){
+//                 console.log('connect to device');
+//                 instDriver.connectUsbDevice(usbDev[i],function(e,id){
+//                     if(e)
+//                         console.log(e);
+//                     console.log(id);
+
+//                     var devDriv=instDriver.getDevDriver(id);
 
 
-// setInterval(function(){
-//     console.log("show net device");
-//     console.log(instDriver.showNetDevice());
-// },1000);
-
-// dsoCtrl= instDriver.DsoNet(3000,'172.16.5.68');
-// dsoCtrl.connect()
-//     .then(function(){
-//         dsoCtrl.syncConfig().then(function(data){
-//             console.log(data);
-//             console.log("==========================");
-//         })
-//     })
-//     .then(function(){dsoCtrl.enableCh('ch1');})
-//     .then(function(){dsoCtrl.enableCh('ch2');})
-//     .then(dsoCtrl.run)
-//     .then(function(){
-//         dsoCtrl.setEdgeTrig({
-//                                 source: 'ch2',
-//                                 mode:'AUTO',
-//                                 level:'1.0E-1',
-//                                 edge:{  coupling:'AC',
-//                                         slop:'FALL'}
+//                     if(devDriv === null ){
+//                         console.log('device not avaiable');
+//                     }
+//                     else{
+//                         console.log('do command sequence');
+//                         devDriv.run()
+//                             .then(function(){
+//                                 devDriv.getRawdata('ch1')
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
 //                             })
-//             .catch(function(err){
+//                             .then(function(){
+//                                 devDriv.getHorizontal()
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
+//                             })
+//                             .then(function(){
+//                                 devDriv.getVertical('ch1')
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
+//                             })
+//                             .then(function(){
+//                                 devDriv.getSnapshot()
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
+//                             })
+//                             // .then(devDriv.syncConfig)
+//                             .then(function(){
+//                                 devDriv.supportedMeasType()
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
+//                             })
+//                             .then(function(){
+//                                 devDriv.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'})
+//                             })
+//                             .then(function(){
+//                                 devDriv.getMeas('meas1')
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
+//                             })
+//                             .then(devDriv.stop)
+//                             .then(function(){
+//                                 devDriv.disableCh('ch2');
+//                             })
+//                             .then(devDriv.autoset)
+//                             .then(function(){
+//                                 devDriv.getSnapshot()
+//                                     .then(function(data){
+//                                     console.log(data);
+//                                     });
+//                             })
+//                     }
 
-//                 console.log(err);
+//                 });
+//                 break;
+//             }
+//         }
 
-//             })
-//     })
-//     .then(function(){
-//         dsoCtrl.getEdgeTrig( )
-//             .then(function(res){
-//                 console.log(res);
-//                 console.log('done');
-//             })
-//             .catch(function(err){
-
-//                 console.log(err);
-
-//             })
-//     })
-//     .then(dsoCtrl.stop)
-//     .catch(function(){
-//         console.log('dsoCtrl error');
-//     });
-// dsoCtrl.connect()
-//     .then(dsoCtrl.run)
-//     .then(function(){
-//         dsoCtrl.enableCh('ch2');
-//     })
-//     .then(function(){
-//         dsoCtrl.getRawdata('ch1')
-//             .then(function(data){
-//             console.log(data);
-//             });
-//     })
-//     .then(function(){
-//         dsoCtrl.getHorizontal()
-//             .then(function(data){
-//             console.log(data);
-//             });
-//     })
-//     .then(function(){
-//         dsoCtrl.getVertical('ch1')
-//             .then(function(data){
-//             console.log(data);
-//             });
-//     })
-//     .then(function(){
-//         dsoCtrl.getSnapshot()
-//             .then(function(data){
-//             console.log(data);
-//             });
-//     })
-//     .then(dsoCtrl.syncConfig)
-//     .then(function(){
-//         dsoCtrl.supportedMeasType()
-//             .then(function(data){
-//             console.log(data);
-//             });
-//     })
-//     .then(function(){
-//         dsoCtrl.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'})
-//     })
-//     .then(function(){
-//         dsoCtrl.getMeas('meas1')
-//             .then(function(data){
-//             console.log(data);
-//             });
-//     })
-//     .then(dsoCtrl.stop)
-//     .then(function(){
-//         dsoCtrl.disableCh('ch2');
-//     });
-// var usbDev = instDriver.getUsbDevice();
-
-
-setTimeout(function(){
-    var usbDev = instDriver.getUsbDevice();
-
-    console.log("result:");
-    console.log(usbDev);
-
-    if(usbDev.length>0){
-        for(var i=0,len=usbDev.length; i<len; i++){
-            if(parseInt(usbDev[i].productId) === parseInt('0x2204')){
-                console.log('connect to device');
-                instDriver.connectUsbDevice(usbDev[i],function(e,id){
-                    if(e)
-                        console.log(e);
-                    console.log(id);
-
-                    var devDriv=instDriver.getDevDriver(id);
-
-                    if(devDriv === null ){
-                        console.log('device not avaiable');
-                    }
-                    else{
-                        devDriv.run()
-                            .then(function(){
-                                devDriv.getRawdata('ch1')
-                                    .then(function(data){
-                                    console.log(data);
-                                    });
-                            })
-                            .then(function(){
-                                devDriv.getHorizontal()
-                                    .then(function(data){
-                                    console.log(data);
-                                    });
-                            })
-                            .then(function(){
-                                devDriv.getVertical('ch1')
-                                    .then(function(data){
-                                    console.log(data);
-                                    });
-                            })
-                            .then(function(){
-                                devDriv.getSnapshot()
-                                    .then(function(data){
-                                    console.log(data);
-                                    });
-                            })
-                            // .then(devDriv.syncConfig)
-                            .then(function(){
-                                devDriv.supportedMeasType()
-                                    .then(function(data){
-                                    console.log(data);
-                                    });
-                            })
-                            .then(function(){
-                                devDriv.setMeas({ch:'meas1',src1:'ch1',src2:'ch2',type:'MEAN'})
-                            })
-                            .then(function(){
-                                devDriv.getMeas('meas1')
-                                    .then(function(data){
-                                    console.log(data);
-                                    });
-                            })
-                            .then(devDriv.stop)
-                            .then(function(){
-                                devDriv.disableCh('ch2');
-                            });
-                    }
-
-                });
-                break;
-            }
-        }
-
-    }
-},1000);
+//     }
+// },1000);
 
 // dsoCtrl=instDriver.DsoUSB('0x098f','0x2204');
 // console.log(dsoCtrl);
@@ -227,7 +136,12 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 app.use(express.static(__dirname + '/'));
 
-app.route('/dso')
+app.route('/inst')
+    .get(function(req, res, next){
+        var usbDev = instDriver.getUsbDevice();
+        res.status(200).send(usbDev);
+    });
+app.route('/inst/dso')
     .get(function(req,res,next){
         res.send(instDriver.showNetDevice());
 

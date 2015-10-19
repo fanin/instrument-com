@@ -14,7 +14,7 @@ var error = debug('usb:error');
 var supportDevice = require('../sys/sysConstant.js').supportDevice;
 var __timeoutObj=null;
 
-function pairUsb(dsoObj,callback){
+function pairUsb(dev,callback){
     // var SerialPort=usbPort.SerialPort;
     var device=null,serialNumber;
 
@@ -34,21 +34,21 @@ function pairUsb(dsoObj,callback){
             log("ports[%d].vendorId %x",i,ports[i].vendorId);
             log("ports[%d].productId %x",i,ports[i].productId);
             log("ports[%d].serialNumber %x",i,ports[i].serialNumber);
-            log("dsoObj.usb.vid %x",dsoObj.usb.vid);
-            log("dsoObj.usb.pid %x",dsoObj.usb.pid);
-            serialNumber= dsoObj.usb.manufacturer+'_'+dsoObj.usb.deviceName+'_'+dsoObj.usb.serialNumber
+            log("dev.usb.vid %x",dev.usb.vid);
+            log("dev.usb.pid %x",dev.usb.pid);
+            serialNumber= dev.usb.manufacturer+'_'+dev.usb.deviceName+'_'+dev.usb.serialNumber
             log("serialNumber %x",serialNumber);
 
             if(ports[i].serialNumber===serialNumber){
-                if(dsoObj.state.conn!=='connected'){
+                if(dev.state.conn!=='connected'){
                     var port=ports[i];
                     if(__timeoutObj==null){
                         __timeoutObj=setTimeout(function(){
                             __timeoutObj=null;
                             device= new usbPort.SerialPort(port.comName,{baudrate: 57600,encoding:'binary'});
-                            // util.inherits(dsoObj.usb,events.EventEmitter);
+                            // util.inherits(dev.usb,events.EventEmitter);
                             log(device);
-                            dsoObj.interf='usb';
+                            dev.interf='usb';
 
                             if(device.isOpen()){
                                 log('USB device already opened');
@@ -58,28 +58,28 @@ function pairUsb(dsoObj,callback){
                                 device.open(function (error) {
                                     if(error){
                                         console.log('error msg: ' + error);
-                                        pairUsb(dsoObj,callback);
+                                        pairUsb(dev,callback);
                                     }
-                                    dsoObj.usb.device = device;
-                                    dsoObj.state.conn='connected';
+                                    dev.usb.device = device;
+                                    dev.state.conn='connected';
                                     log('open USB device');
                                     device.on('error',function(){
-                                        if(dsoObj.usb.device){
-                                            if(dsoObj.usb.device.isOpen()){
-                                                dsoObj.usb.device.close();
+                                        if(dev.usb.device){
+                                            if(dev.usb.device.isOpen()){
+                                                dev.usb.device.close();
                                             }
                                         }
-                                        dsoObj.state.conn='disconnected';
-                                        dsoObj.usb.device=null;
-                                        dsoObj.interf='empty';
+                                        dev.state.conn='disconnected';
+                                        dev.usb.device=null;
+                                        dev.interf='empty';
                                     });
 
-                                    device.on('data',dsoObj.dataHandler);
-                                    dsoObj.state.conn='connected';
+                                    device.on('data',dev.dataHandler);
+                                    dev.state.conn='connected';
                                     // // device.on('data', function(data) {
                                     // //   log('data received: ' + data);
                                     // // });
-                                    // dsoObj.usb.device.write('*idn?\r\n',function(err,results){
+                                    // dev.usb.device.write('*idn?\r\n',function(err,results){
                                     //     log('err ' + err);
                                     //     log('results ' + results);
                                     // });
@@ -94,7 +94,7 @@ function pairUsb(dsoObj,callback){
                                 });
 
                             }
-                        }, 1000);
+                        }, 1500);
                     }
                 }
                 else{
@@ -104,49 +104,32 @@ function pairUsb(dsoObj,callback){
                 return;
             }
         }
-        if(dsoObj.usb.device){
-            if(dsoObj.usb.device.isOpen()){
-                dsoObj.usb.device.close();
+        if(dev.usb.device){
+            if(dev.usb.device.isOpen()){
+                dev.usb.device.close();
             }
         }
-        dsoObj.state.conn='disconnected';
-        dsoObj.usb.device=null;
-        dsoObj.interf='empty';
+        dev.state.conn='disconnected';
+        dev.usb.device=null;
+        dev.interf='empty';
     });
 }
-exports.openUsb=function(dsoObj,callback){
-    pairUsb(dsoObj,callback);
+exports.openUsb=function(dev,callback){
+    pairUsb(dev,callback);
 }
-exports.closeUsb=function(dsoObj,callback){
+exports.closeUsb=function(dev,callback){
 
-    dsoObj.usb.device.close(callback);
-    dsoObj.state.conn='disconnected';
-    dsoObj.usb.device=null;
-    dsoObj.interf='empty';
+    dev.usb.device.close(callback);
+    dev.state.conn='disconnected';
+    dev.usb.device=null;
+    dev.interf='empty';
 }
 
-exports.BindUsbObj=function(dsoObj,device){
+exports.BindUsbObj=function(dev,device){
     log('BindUsbObj');
     log(device);
-    dsoObj.interf='usb';
-    dsoObj.usb={
-        dataHandler:function(data){
-            log('usbDev on data event!');
-
-            if(dsoObj.state.setTimeout){
-                if(dsoObj.state.conn!=='timeout'){
-                    log('clearTimeout');
-                    clearTimeout(dsoObj.state.timeoutObj);
-                }
-                dsoObj.state.setTimeout=false;
-            }
-            if(dsoObj.cmdHandler(dsoObj.handlerSelf,data,dsoObj.syncCallback)==true){
-                if(typeof dsoObj.syncCallback === 'function'){
-                    log('call callback');
-                    dsoObj.syncCallback();
-                }
-            }
-        },
+    dev.interf='usb';
+    dev.usb={
         manufacturer:device.manufacturer,
         deviceName:device.deviceName,
         serialNumber:device.serialNumber,
@@ -157,7 +140,7 @@ exports.BindUsbObj=function(dsoObj,device){
         onChange:(function(){
             log('usb onChange event');
             pairUsb(this);
-        }).bind(dsoObj),
+        }).bind(dev),
         write:(function(data){
             if(this.usb.device === null){
                 log('usb device not exist');
@@ -185,17 +168,17 @@ exports.BindUsbObj=function(dsoObj,device){
                     return false;
 				}
             //}
-        }).bind(dsoObj)
+        }).bind(dev)
         // onData:(function(callback){
         //     // var device= this.usb.device;
         //     // this.usb.device.on('data',callback);
         //     // log(this.usb.device);
-        // }).bind(dsoObj)
+        // }).bind(dev)
     };
     // pairUsb take long time, so pair before connect to use
-    // pairUsb(dsoObj);
-    // usbDetect.on('add:'+vid+':'+pid, dsoObj.usb.onChange);
-    // usbDetect.on('remove:'+vid+':'+pid, dsoObj.usb.onChange);
+    // pairUsb(dev);
+    // usbDetect.on('add:'+vid+':'+pid, dev.usb.onChange);
+    // usbDetect.on('remove:'+vid+':'+pid, dev.usb.onChange);
 
 }
 exports.regRemoveEvent=function(callback){

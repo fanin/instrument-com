@@ -20,12 +20,12 @@ function Method(id) {
     var method = {
         get:function(prop, res, callback) {
                         var self=this;
-                        if (this.gdsType === '') {
-                            callback('-300','\''+this.gdsType +'\' not supported');
+                        if (this.dev.gdsType === '') {
+                            callback('-300','\''+this.dev.gdsType +'\' not supported');
                             return;
                         }
 
-                        log('this.gdsType='+this.gdsType);
+                        log('this.gdsType='+this.dev.gdsType);
                         log('prop='+prop);
                         var cmd;
                         //var rangeLimit =this.commandObj[this.gdsType][prop].;
@@ -40,35 +40,35 @@ function Method(id) {
                             return;
                         }
 
-                        if (this.commandObj[this.gdsType][prop].command[0].length > 1) {
+                        if (this.commandObj[this.dev.gdsType][prop].command[0].length > 1) {
                             log('id=' + id);
-                            cmd = this.commandObj[this.gdsType][prop].command[chID[id]] + '?\r\n';
+                            cmd = this.commandObj[this.dev.gdsType][prop].command[chID[id]] + '?\r\n';
                         }
                         else {
-                            cmd = this.commandObj[this.gdsType][prop].command + '?\r\n';
+                            cmd = this.commandObj[this.dev.gdsType][prop].command + '?\r\n';
                         }
 
                         log('getProp cmd=' + cmd);
-                        this.cmdHandler = this[id].cmdHandler[prop].getHandler;
-                        this.handlerSelf = this[id];
-                        this.syncCallback = callback;
-                        this.write(cmd);
+                        this.dev.cmdHandler = this[id].cmdHandler[prop].getHandler;
+                        this.dev.handlerSelf = this[id];
+                        this.dev.syncCallback = callback;
+                        this.dev.write(cmd);
 
 
-                        this.state.conn = 'query';
-                        this.state.currentCmd = cmd;
-                        this.state.currentId = id;
-                        this.state.setTimeout = true;
+                        this.dev.state.conn = 'query';
+                        this.dev.state.currentCmd = cmd;
+                        this.dev.state.currentId = id;
+                        this.dev.state.setTimeout = true;
 
-                        this.state.timeoutObj = setTimeout(function() {
+                        this.dev.state.timeoutObj = setTimeout(function() {
                             log('settimeout');
-                            self.state.conn = 'timeout';
-                            cmd = self.commandObj[self.gdsType]['SysErr'].command+'?\r\n';
-                            self.cmdHandler = self.sys.cmdHandler['SysErr'].getHandler;
-                            self.handlerSelf = self;
-                            self.syncCallback = callback;
-                            self.write(cmd);
-                        }, 500);
+                            self.dev.state.conn = 'timeout';
+                            cmd = self.commandObj[self.dev.gdsType]['SysErr'].command+'?\r\n';
+                            self.dev.cmdHandler = self.sys.cmdHandler['SysErr'].getHandler;
+                            self.dev.handlerSelf = self;
+                            self.dev.syncCallback = callback;
+                            self.dev.write(cmd);
+                        }, 2000);
 
                         // this.net.socket.once('error',function(e){
                         //     console.log('on prop_method :connect error!');
@@ -83,31 +83,31 @@ function Method(id) {
                         // console.log('ID='+id);
                         // return;
 
-                        if (this.gdsType === '' || this.gdsType === 'undefined') {
-                            callback('-300','\'' + this.gdsType + '\' not supported');
+                        if (this.dev.gdsType === '' || this.dev.gdsType === 'undefined') {
+                            callback('-300','\'' + this.dev.gdsType + '\' not supported');
                             return;
                         }
 
-                        log('this.gdsType=' + this.gdsType);
+                        log('this.gdsType=' + this.dev.gdsType);
                         var cmd;
-                        var rangeLimit = this.commandObj[this.gdsType][prop];
+                        var rangeLimit = this.commandObj[this.dev.gdsType][prop];
                         var self = this;
 
-                        if (prop === 'AUTOSET'||(prop === 'SINGLE')) {
-                            log('==================== AUTOSET =================');
-                            autosetWaitTimeObj = setTimeout(function() {
-                                autosetWaitTimeObj = null;
-                                //use opc to check command done
-                            },5000);
-                        }
+                        // if (prop === 'AUTOSET'||(prop === 'SINGLE')) {
+                        //     log('==================== AUTOSET =================');
+                        //     autosetWaitTimeObj = setTimeout(function() {
+                        //         autosetWaitTimeObj = null;
+                        //         //use opc to check command done
+                        //     },5000);
+                        // }
 
-                        if (this.commandObj[this.gdsType][prop].command[0].length > 1) {
+                        if (this.commandObj[this.dev.gdsType][prop].command[0].length > 1) {
                             log('id=' + id);
 
-                            cmd = this.commandObj[this.gdsType][prop].command[chID[id]];
+                            cmd = this.commandObj[this.dev.gdsType][prop].command[chID[id]];
                             log(prop + ' commane=' + cmd);
                         }else {
-                            cmd = this.commandObj[this.gdsType][prop].command;
+                            cmd = this.commandObj[this.dev.gdsType][prop].command;
                         }
 
 
@@ -167,13 +167,13 @@ function Method(id) {
 
                             log('debug info:'+scmd);
                             log('debug info:'+qcmd);
-                            this.write(scmd);
+                            this.dev.write(scmd);
 
-                            this.cmdHandler = this[id].cmdHandler[prop].setHelper;
+                            this.dev.cmdHandler = this[id].cmdHandler[prop].setHelper;
                             this[id].temp = fval;
-                            this.handlerSelf = this[id];
-                            this.syncCallback = callback;
-                            this.write(qcmd);
+                            this.dev.handlerSelf = this[id];
+                            this.dev.syncCallback = callback;
+                            this.dev.write(qcmd);
 
                             // this.net.socket.once('data',function(data){
                             //     data=data.slice(0,-1);
@@ -192,23 +192,23 @@ function Method(id) {
                         }
 
                         log('cmd set =' + cmd);
-                        if (this.write(cmd)) {
+                        if (this.dev.write(cmd)) {
                             self[id].cmdHandler[prop].setHelper(self[id],arg);
                             if (callback) {
                                 log('cmd set done');
                                 callback(null);
                             }
                         }else {
-                            if(this.interf === 'net'){
-                                this.net.socket.once('drain', function() {
-                                    this.write(cmd);
+                            if(this.dev.interf === 'net'){
+                                this.dev.net.socket.once('drain', function() {
+                                    this.dev.write(cmd);
                                     self[id].cmdHandler[prop].setHelper(self[id],arg);
                                     if(callback){
                                         callback(null);
                                     }
                                 });
                             }
-                            else if(this.interf === 'use'){
+                            else if(this.dev.interf === 'use'){
                                 if(callback){
                                         callback('use write error');
                                     }

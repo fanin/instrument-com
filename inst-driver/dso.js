@@ -8,16 +8,15 @@ var net     = require('net');
 var fs      = require('fs');
 var async   = require('async');
 var uitl    = require('util');
-var events  = require('events');
+var EventEmitter  =  require('events').EventEmitter;
 var path    = require('path');
 var Promise = require('es6-promise').Promise;
 // var mdns = require('mdns');
 
-
 var debug = require('debug');
-var log = debug('index:log');
-var info = debug('index:info');
-var error = debug('index:error');
+var log = debug('dso:log');
+var info = debug('dso:info');
+var error = debug('dso:error');
 var sysConstant=require('./sys/sysConstant.js');
 var syscmd = require('./dso/system.js');
 var trigcmd = require('./dso/trigger.js');
@@ -27,8 +26,10 @@ var mathcmd = require('./dso/math.js');
 var meascmd = require('./dso/measure.js');
 var channel = require('./dso/channel.js');
 var usbDev = require('./dev/devUsb.js');
+var base = require('./dev/base.js');
 
-var supportType = ['GDS2000E'];
+// var cmdEvent = new EventEmitter();
+
 //
 
 var chanLoadCmd = [
@@ -262,450 +263,41 @@ var sysTestCmd = [
 
 
 
-function show_props(obj, objName) {
-    var obj_string = '';
 
-    for (var i in obj) {
-        if (typeof obj[i] === 'object'){
-            obj_string += show_props(obj[i],i.toString());
-        }else{
-            obj_string += objName + '.' + i + '=' + obj[i] + '\n';
-        }
-    }
-
-    return obj_string;
-}
-
-function getIDN(dsoObj, data, cb) {
-    var id = data.toString().split(',');
-
-    dsoObj.gdsType = '';
-    for (var j = 0; j < supportType.length; j++) {
-        var gdsModel = dsoObj.commandObj[supportType[j]].model;
-        for (var i = 0; i < gdsModel.length ; i++) {
-            log('compare ' + id[1] + 'with ' + gdsModel[i]);
-            if (id[1] === gdsModel[i]) {
-                dsoObj.gdsType = supportType[j];
-                dsoObj.gdsModel = id[1];
-                dsoObj.maxChNum = dsoObj.commandObj[supportType[j]].maxChNum[gdsModel[i]];
-                break;
-            }
-        }
-    }
-
-    log('gdsType=' + dsoObj.gdsType);
-    log('gdsModel=' + dsoObj.gdsModel);
-
-    //cb(null,data);
-    return true;
-}
-
-function getChInfo(dsoObj, data, cb) {
-        log(data);
-        cb(null, data);
-}
 
 function done(){
     log('------------------------- done');
 }
 
-
-
-function testDsoCmd(dsoObj, callback) {
-    var tmp={};
-
-
-    async.series(
-        [
-            function(done) {
-                log('write command to server');
-                dsoObj.state.conn = 'query';
-                dsoObj.cmdHandler = getIDN;
-                dsoObj.handlerSelf = dsoObj;
-                dsoObj.syncCallback = done;
-                dsoObj.write('*idn?\r\n');
-                // dsoObj.net.socket.once('data',function(data){
-                //     getIDN(data,dsoObj,done);
-                // });
-
-            },
-            function(done) {
-                dsoObj.state.conn = 'query';
-                dsoObj.cmdHandler = getChInfo;
-                dsoObj.handlerSelf = dsoObj;
-                dsoObj.syncCallback = done;
-                dsoObj.write(':CHANnel1:SCAle?\r\n');
-                // dsoObj.net.socket.once('data',function(data){
-                //     getChInfo(data,dsoObj,done);
-                // });
-            },
-            function(done) {
-                async.eachSeries(measSetTestCmd,
-                    function(item,done) {
-                        dsoObj.meas1.prop.set(item.prop, item.arg, done);
-
-                    },function(err, results) {
-                        log('--------- Measure1 Set Prop Test Cmd -------------');
-                        log('err:' + err);
-                        log('results:' + results);
-                        log('--------------------------------------------');
-                        done();
-                    }
-                );
-            },
-
-            function(done){
-                async.eachSeries(measGetTestCmd,
-                    function(item, done) {
-                        dsoObj.meas1.prop.get(item.prop, item.arg, done);
-
-                    },function(err, results) {
-                        log('--------- Measure1 Get Prop Test Cmd -------------');
-                        log('err:' + err);
-                        log('results:' + results);
-                        log('--------------------------------------------');
-                        done();
-                    }
-                );
-            },
-
-
-
-
-            function(done) {
-                async.eachSeries(trigTestCmd,
-                    function(item, done) {
-                        dsoObj.trig.prop.set(item.prop, item.arg, done);
-
-                    },function(err, results) {
-                        log('--------- Trigger Set Prop Test Cmd -------------');
-                        log('err:' + err);
-                        log('results:' + results);
-                        log('--------------------------------------------');
-                        done();
-                    }
-                );
-            },
-            function(done) {
-
-                async.eachSeries(sysTestCmd,
-                //async.eachSeries(dispTestCmd,
-                    function(item, done) {
-                        dsoObj.sys.prop.get(item.prop, item.arg, done);
-                    },function(err, results){
-                        log('*************** System Get Error After Trigger Test Cmd ***************');
-                        done();
-                    }
-                );
-            }
-        ]
-        ,
-        function(err, results) {
-            log('err:' + err);
-            log('results:' + results);
-            log('--------- dso object info -------------');
-            if (typeof callback  === 'function')
-                    callback();
-        }
-    );
-};
-
 // function sendIDN(){
 // }
-function checkDsoExist(dsoObj, callback) {
-    var timeoutCnt = 0;
-    log('checkDsoExist');
-    log('write command to server');
-    dsoObj.state.conn = 'query';
-    dsoObj.cmdHandler = getIDN;
-    dsoObj.handlerSelf = dsoObj;
-    dsoObj.state.setTimeout = true;
-    dsoObj.state.timeoutObj = setTimeout(function() {
-        log('settimeout');
-        dsoObj.state.conn = 'timeout';
-        dsoObj.write('*idn?\r\n');
-    }, 1000);
-    if(dsoObj.write('*idn?\r\n')){
-        dsoObj.syncCallback = (function() {
-            var self = this;
-
-            if(timeoutCnt++ > 10) {
-                callback('error');
-            }
-
-            if(this.gdsType ==='') {
-                this.state.setTimeout = true;
-                this.state.timeoutObj = setTimeout(function() {
-                    log('settimeout');
-                    self.state.conn = 'timeout';
-                    self.write('*idn?\r\n');
-                }, 1000);
-            }else {
-                callback(null);
-            }
-        }).bind(dsoObj);
-    }
-    else{
-        log('checkDsoExist error');
-        clearTimeout(dsoObj.state.timeoutObj);
-    }
 
 
-    // async.series(
-    //     [
-    //         function(done) {
-    //             log('write command to server');
-    //             dsoObj.state.conn='query';
-    //             dsoObj.cmdHandler=getIDN;
-    //             dsoObj.handlerSelf=dsoObj;
-    //             dsoObj.syncCallback=done;
-    //             dsoObj.write('*idn?\r\n');
-    //         }
-    //     ]
-    //     ,
-    //     function(err,results){
-    //         dsoObj.state.conn='connected';
-    //         log('err:'+err);
-    //         log('results:'+results);
-    //         log('--------- dso object info -------------');
-    //         if(typeof callback  === 'function'){
-    //                 callback();
-    //                 return;
-    //         }
-    //     }
-    // );
-};
-function enableSocketTime(dsoObj) {
-    dsoObj.net.socket.setTimeout(1500,function() {
-        log('socket timeout');
-        if(dsoObj.state.conn === 'timeout') {
-            dsoObj.net.socket.end();
-            dsoObj.net.socket.destroy();
-        }
-    })
-}
-function enableInterfTime(dsoObj) {
-    if(dsoObj.interf === 'net')
-        enableSocketTime(dsoObj);
-}
-var Dso = function() {
-    // dsoObj.state='connectting';
-    this.state = {
-        conn : 'disconnect',
-        currentCmd : '',
-        currentId : '',
-        setTimeout : false,
-        timeoutObj : {},
-        errCode : {message:'', type:'', handler:function(){}}
-    };
-    // this.port=port;
-    // this.host_addr=host_addr;
-    this.interf = 'net';
-    this.gdsType = '';
-    this.gdsModel = '';
-    this.chNum = 0;
-    this.activeCh = '';
-    this.cmdHandler = getIDN;
-    this.handlerSelf = {};
-    this.syncCallback = function(){};
-    this.maxChNum = 0;
-    this.commandObj = {};
-    this.cmdSequence = [];
-    this.writeTimeoutObj = null;
-    this.asyncWrite = 'done';
-    this.errHandler = null;
-    this.write = function(data) {
-        if (this.interf === 'usb') {
-            if(this.usb.write(data))
-                return true;
-            else
-                return false;
-        }else if (this.interf === 'net') {
-            this.net.socket.write(data);
-            return true;
-        }
-        // else
-        //     return false;
-        // return true;
-    };
-    this.dataHandler = (function(data) {
-        if ((data === 0x0a) && (data.length === 1)) {
-            log('receive one byte data');
-            log(Number(data));
-            log(data);
-            log('=====================');
-            return;
-        }
-
-        log('dataHandler receive :' + data.slice(0,20) + ',length=' + data.length);
-        if (this.state.setTimeout) {
-            // if(this.state.conn!=='timeout'){
-                log('clearTimeout');
-                clearTimeout(this.state.timeoutObj);
-            // }
-            this.state.setTimeout=false;
-        }
-        if (this.cmdHandler(this.handlerSelf, data,this.syncCallback) ===true) {
-            if (typeof this.syncCallback === 'function') {
-                log('call callback');
-                this.syncCallback();
-            }
-        }
-    }).bind(this);
-
-}
-uitl.inherits(Dso, events.EventEmitter);
-
-Dso.prototype.GetSnapshot = function(cb) {
-    this.sys.prop.get('DispOut', '', function() {
-        if (cb){
-            cb(this.sys.dispData);
-        }
-    });
-
-}
-
-Dso.prototype.GetRawdata = function(ch,cb) {
-    var self = this;
-
-    log(sytConstant.chID[ch]);
-
-    if (sytConstant.chID[ch] !== undefined) {
-        var cmd = [
-                {id:'acq',prop:'AcqHeader',arg:'OFF',cb:done,method:'set'},
-                {id:ch,prop:'AcqMemory',arg:'',cb:cb,method:'get'}
-            ];
-            this.emit('cmd_write',cmd);
-
-            // async.eachSeries(cmd,
-            //     function(item,done){
-            //         log(item);
-            //         if(item.id==='acq'){
-            //             self.acq.prop.set(item.prop,item.arg,done);
-            //         }
-            //         else{
-            //             self[ch].prop.get(item.prop,item.arg,done);
-            //         }
-
-            //     },function(err,results){
-            //         if(cb)
-            //             cb(self[ch].rawdata);
-            //     }
-            // );
-    }else {
-        if(cb){
-            cb('error');
-        }
-    }
-
-}
-
-Dso.prototype.onSocketErr=function(cb) {
-    var self = this;
-    this.net.socket.on('error', function(e) {
-        log('onTcpConnect: connect error!');
-        self.state.conn = 'disconnect';
-        self.net.socket.end();
-        if (cb){
-            cb(e.message);
-        }
-    });
-}
-
-Dso.prototype.GetPort = function(cb) {
-    if (cb){
-        cb(this.net.port);
-    }else {
-        return this.net.port;
-    }
-}
-
-Dso.prototype.GetAddr = function(cb) {
-    if(cb){
-        cb(this.net.host_addr);
-    }else {
-        return this.net.host_addr;
-    }
-}
-
-
-
-Dso.prototype.reloadState = function(cb) {
-    var self = this;
-
-    if(this.state.conn ==='disconnect') {
-        cb('connection broken');
-        return;
-    }
-
-    enableInterfTime(this);
-    var reloadCmd = [].concat(trigLoadCmd);
-    reloadCmd = reloadCmd.concat(acqLoadCmd);
-    reloadCmd = reloadCmd.concat(horLoadCmd);
-    async.series(
-        [
-            function(done) {
-                async.eachSeries(reloadCmd,
-                    function(item, done) {
-                        self[item.id].prop.get(item.prop, item.arg,done);
-
-                    },function(err, results) {
-                        done();
-                    }
-                );
-            },
-            function(done) {
-                var chCmd = [];
-                for(var i = 0; i < self.maxChNum; i++) {
-                    chCmd = chCmd.concat(chanLoadCmd[i]);
-                }
-
-                async.eachSeries(chCmd,
-                    function(item, done) {
-                            self[item.id].prop.get(item.prop, item.arg, done);
-
-                    },function(err, results) {
-                        done();
-                    }
-                );
-
-            }
-        ]
-        ,
-        function(err, results) {
-            self.state.conn = 'connected';
-            if (cb) {
-                cb();
-                return;
-            }
-        }
-    );
-};
 
 function getCmdObj() {
     var FilePath = path.join(__dirname, '/sys/dso-command.json');
 
-    this.commandObj = JSON.parse(fs.readFileSync(FilePath));
+    return JSON.parse(fs.readFileSync(FilePath));
 }
 function BindNetObj(dsoObj, port, host_addr) {
 
     // dsoObj.port=port;
     // dsoObj.host_addr=host_addr;
-    dsoObj.interf = 'net';
-    dsoObj.net = {
+    dsoObj.dev.interf = 'net';
+    dsoObj.dev.net = {
         dataHandler : function(data) {
             // log('socket on data event!');
 
             // socket idle when send query command
-            if (dsoObj.state.setTimeout) {
-                if (dsoObj.state.conn !== 'timeout') {
+            if (dsoObj.dev.state.setTimeout) {
+                if (dsoObj.dev.state.conn !== 'timeout') {
                     log('clearTimeout');
-                    clearTimeout(dsoObj.state.timeoutObj);
+                    clearTimeout(dsoObj.dev.state.timeoutObj);
                 }
-                dsoObj.state.setTimeout = false;
+                dsoObj.dev.state.setTimeout = false;
             }
 
-            if ((dsoObj.state.conn === 'query') || (dsoObj.state.conn === 'timeout')) {
+            if ((dsoObj.dev.state.conn === 'query') || (dsoObj.dev.state.conn === 'timeout')) {
                 if (dsoObj.cmdHandler(dsoObj.handlerSelf, data, dsoObj.syncCallback) === true) {
                     if (dsoObj.syncCallback) {
                         log('call callback');
@@ -719,133 +311,7 @@ function BindNetObj(dsoObj, port, host_addr) {
         socket : {}
     };
 }
-Dso.prototype.tcpConnect = function(Callback) {
-    var err_string;
-    var self = this;
 
-    if(self.state.conn==='connected'){
-        Callback();
-        return;
-    }
-    this.net.socket = net.connect( this.net.port, this.net.host_addr, function() { //'connect' listener
-                      log('connected to server!');
-                      //dsoObj.net.socket.setEncoding('utf8');
-                      self.net.socket.setMaxListeners(0);
-                      self.state.conn = 'connected';
-                      self.interf = 'net';
-                      // self.net.socket.on('data',self.net.dataHandler);
-                      self.net.socket.on('data',self.dataHandler);
-                      checkDsoExist(self,Callback);
-                      // if(Callback)
-                      //   Callback();
-                });
-
-    this.net.socket.on('close', function(e) {
-        log('onTcpConnect: close!');
-        self.state.conn = 'disconnect';
-        err_string = e.message;
-        //dsoObj.net.socket.destroy();
-    });
-};
-Dso.prototype.tcpDisconnect = function(Callback) {
-    var self = this;
-
-    this.net.socket.removeAllListeners('close');
-    this.net.socket.on('close', function(e) {
-        log('onTcpConnect: close!');
-        self.state.conn = 'disconnect';
-        if(Callback){
-            Callback();
-        }
-    });
-    this.net.socket.end();
-};
-Dso.prototype.usbConnect = function(Callback) {
-    var err_string;
-    var self = this;
-
-    usbDev.openUsb(this, function() {
-            log('openUsb');
-            // self.usb.onData(self.dataHandler);
-            checkDsoExist(self, Callback);
-    });
-};
-Dso.prototype.usbDisconnect = function(Callback) {
-    var self = this;
-
-    usbDev.closeUsb(this, function() {
-        self.state.conn='disconnected';
-        self.usb.device=null;
-        self.interf='empty';
-    });
-};
-Dso.prototype.cmd_write = function(cmdSequence) {
-    var self = this;
-    var cb = null;
-
-    var cmd = [];
-
-    if (this.asyncWrite === 'busy') {
-        log('async write busy');
-        if (this.writeTimeoutObj === null) {
-            log('set timeout');
-            this.writeTimeoutObj = setTimeout(function() {
-                log('cmd_write reissue');
-                self.writeTimeoutObj = null;
-                self.cmd_write(cmdSequence);
-            },100);
-        }
-        return;
-    }
-
-    if (this.cmdSequence.length === 0) {
-        if (this.writeTimeoutObj !== null) {
-            clearTimeout(this.writeTimeoutObj);
-            // this.writeTimeoutObj=null;
-            this.emit('cmd_write', self.cmdSequence);
-        }
-        log('cmdSequence = 0');
-        return;
-    }
-
-    for (var i = 0, len = this.cmdSequence.length; i < len; i++) {
-        cmd[i] = this.cmdSequence.shift();
-
-        // avoid missing async callback, flush command buffer when find cb exist
-        if (cmd[i].cb !== null){
-            cb = cmd[i].cb;
-            if(i < len-1 ){
-                this.writeTimeoutObj = setTimeout(function() {
-                    log('cmd_write reissue');
-                    self.writeTimeoutObj = null;
-                    self.cmd_write(cmdSequence);
-                },100);
-            }
-            break;
-        }
-    }
-    self.asyncWrite = 'busy';
-    async.eachSeries(cmd,
-        function(item,done) {
-            log(item);
-            if(item.method === 'set') {
-                self[item.id].prop.set(item.prop, item.arg, done);
-            }else {
-                self[item.id].prop.get(item.prop, item.arg, done);
-            }
-        },function(err, results) {
-            log('err: '+err);
-            self.asyncWrite = 'done';
-            self.state.conn = 'connected';
-            log('async write done');
-            if (cb)
-                cb(err);
-        }
-    );
-
-
-
-}
 
 /**
 *   Create all needed private properties and method
@@ -857,37 +323,42 @@ Dso.prototype.cmd_write = function(cmdSequence) {
 */
 var _DsoObj = function() {
 
-    var dsoObj = new Dso();
 
-    getCmdObj.call(dsoObj);
+    this.dev = new base.Dev();
+    // uitl.inherits(this.dev, base.Dev);
+    console.log(this);
     //assign dso system command process method to dsoObj.sys
-    dsoObj.sys = syscmd.initSysObj.call(dsoObj, 'sys');
+    this.sys = syscmd.initSysObj.call(this, 'sys');
 
-    dsoObj.trig = trigcmd.initTrigObj.call(dsoObj, 'trig');
+    this.trig = trigcmd.initTrigObj.call(this, 'trig');
 
-    dsoObj.acq = acqcmd.initAcqObj.call(dsoObj, 'acq');
+    this.acq = acqcmd.initAcqObj.call(this, 'acq');
 
-    dsoObj.hor = horcmd.initHorObj.call(dsoObj, 'hor');
+    this.hor = horcmd.initHorObj.call(this, 'hor');
 
-    dsoObj.math = mathcmd.initMathObj.call(dsoObj, 'math');
-    dsoObj.meas1 = meascmd.initMeasObj.call(dsoObj, 'meas1');
-    dsoObj.meas2 = meascmd.initMeasObj.call(dsoObj, 'meas2');
-    dsoObj.meas3 = meascmd.initMeasObj.call(dsoObj, 'meas3');
-    dsoObj.meas4 = meascmd.initMeasObj.call(dsoObj, 'meas4');
-    dsoObj.meas5 = meascmd.initMeasObj.call(dsoObj, 'meas5');
-    dsoObj.meas6 = meascmd.initMeasObj.call(dsoObj, 'meas6');
-    dsoObj.meas7 = meascmd.initMeasObj.call(dsoObj, 'meas7');
-    dsoObj.meas8 = meascmd.initMeasObj.call(dsoObj, 'meas8');
+    this.math = mathcmd.initMathObj.call(this, 'math');
+    this.meas1 = meascmd.initMeasObj.call(this, 'meas1');
+    this.meas2 = meascmd.initMeasObj.call(this, 'meas2');
+    this.meas3 = meascmd.initMeasObj.call(this, 'meas3');
+    this.meas4 = meascmd.initMeasObj.call(this, 'meas4');
+    this.meas5 = meascmd.initMeasObj.call(this, 'meas5');
+    this.meas6 = meascmd.initMeasObj.call(this, 'meas6');
+    this.meas7 = meascmd.initMeasObj.call(this, 'meas7');
+    this.meas8 = meascmd.initMeasObj.call(this, 'meas8');
 
-    dsoObj.ch1 = channel.initChanObj.call(dsoObj, 'ch1');
-    dsoObj.ch2 = channel.initChanObj.call(dsoObj, 'ch2');
-    dsoObj.ch3 = channel.initChanObj.call(dsoObj, 'ch3');
-    dsoObj.ch4 = channel.initChanObj.call(dsoObj, 'ch4');
+    this.ch1 = channel.initChanObj.call(this, 'ch1');
+    this.ch2 = channel.initChanObj.call(this, 'ch2');
+    this.ch3 = channel.initChanObj.call(this, 'ch3');
+    this.ch4 = channel.initChanObj.call(this, 'ch4');
     // for (var i = 0; i<supportType.length; i++){
     //     log(dsoObj.commandObj[SupportedModel[i]].model[0]);
     // }
-    dsoObj.on('cmd_write', dsoObj.cmd_write);
-    return dsoObj;
+    // uitl.inherits(dsoObj, events.EventEmitter);
+    // dsoObj.on('cmd_write', dsoObj.cmd_write);
+    this.cmdEvent = new EventEmitter();
+    this.commandObj = getCmdObj();
+    this.dev.commandObj = this.commandObj;
+    return this;
 };
 
 function findMatchDevice(sample,golden,prop){
@@ -952,7 +423,6 @@ var availableNetDevice= [];
 */
 var _DsoCtrl = function(dsoObj) {
     var dsoctrl = {};
-    log(_DsoCtrl);
 
 /**
 *   The method belong to dsoctrl class used to release device's resource.
@@ -998,10 +468,10 @@ var _DsoCtrl = function(dsoObj) {
 
             };
 
-            if (self.interf === 'usb') {
-                self.usbConnect(conn);
-            }else if (self.interf === 'net') {
-                self.tcpConnect(conn);
+            if (self.dev.interf === 'usb') {
+                self.dev.usbConnect(conn);
+            }else if (self.dev.interf === 'net') {
+                self.dev.tcpConnect(conn);
             }
             else{
                 reject(Error('Not supported interface'));
@@ -1021,13 +491,13 @@ var _DsoCtrl = function(dsoObj) {
 
         return new Promise(function(resolve, reject) {
 
-            if(self.state.conn!=='disconnected'){
-                if(self.writeTimeoutObj!==null){
-                    clearTimeout(self.writeTimeoutObj);
+            if(self.dev.state.conn!=='disconnected'){
+                if(self.dev.writeTimeoutObj!==null){
+                    clearTimeout(self.dev.writeTimeoutObj);
                 }
-                if (self.interf === 'usb') {
+                if (self.dev.interf === 'usb') {
                     self.usbDisconnect(resolve);
-                }else if (self.interf === 'net') {
+                }else if (self.dev.interf === 'net') {
                     self.tcpDisconnect(resolve);
                 }
             }else{
@@ -1062,8 +532,8 @@ var _DsoCtrl = function(dsoObj) {
             var cmd = [
                     {id:'sys', prop:'LRN', arg:'', cb:reload, method:'get'}
                 ];
-            self.cmdSequence = self.cmdSequence.concat(cmd);
-            self.emit('cmd_write', cmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+            self.cmdEvent.emit('cmd_write', cmd);
         });
     }).bind(dsoObj);
 
@@ -1109,9 +579,9 @@ var _DsoCtrl = function(dsoObj) {
                     {id:'hor',prop:'HorZoomPosition',arg:'',cb:null,method:'get'},
                     {id:'hor',prop:'HorZoomScale',arg:'',cb:rawData,method:'get'}
                 ];
-            self.cmdSequence = self.cmdSequence.concat(cmd);
-            // log(self.cmdSequence);
-            self.emit('cmd_write', cmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+            // log(self.dev.cmdSequence);
+            self.cmdEvent.emit('cmd_write', cmd);
         });
     }).bind(dsoObj);
 
@@ -1175,9 +645,9 @@ var _DsoCtrl = function(dsoObj) {
             }
             if(cmd.length > 0){
                 cmd[cmd.length-1].cb = rawData;
-                self.cmdSequence = self.cmdSequence.concat(cmd);
-                // log(self.cmdSequence);
-                self.emit('cmd_write', cmd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+                // log(self.dev.cmdSequence);
+                self.cmdEvent.emit('cmd_write', cmd);
             }
             else{
                 log('setHorizontal do nothing');
@@ -1242,11 +712,11 @@ var _DsoCtrl = function(dsoObj) {
             if(chNum < self.maxChNum) {
                 chCmd = chanLoadCmd[chNum].slice(0);
                 chCmd[chCmd.length-1].cb = vetical;
-                self.cmdSequence = self.cmdSequence.concat(chCmd);
-                // self.cmdSequence[self.cmdSequence.length-1].cb = vetical;
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(chCmd);
+                // self.dev.cmdSequence[self.dev.cmdSequence.length-1].cb = vetical;
                 // log(chanLoadCmd[chNum]);
                 // log('----------------------------');
-                self.emit('cmd_write', self.cmdSequence);
+                self.cmdEvent.emit('cmd_write', self.dev.cmdSequence);
             }
         });
     }).bind(dsoObj);
@@ -1335,9 +805,9 @@ var _DsoCtrl = function(dsoObj) {
             }
             if(cmd.length > 0){
                 cmd[cmd.length-1].cb = vertical;
-                self.cmdSequence = self.cmdSequence.concat(cmd);
-                // log(self.cmdSequence);
-                self.emit('cmd_write', cmd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+                // log(self.dev.cmdSequence);
+                self.cmdEvent.emit('cmd_write', cmd);
             }
             else{
                 log('setVertical do nothing');
@@ -1374,8 +844,8 @@ var _DsoCtrl = function(dsoObj) {
                 var cmd = [
                         {id:chid, prop:'ChState', arg:'ON', cb:chstate, method:'set'}
                     ];
-                self.cmdSequence = self.cmdSequence.concat(cmd);
-                self.emit('cmd_write', cmd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+                self.cmdEvent.emit('cmd_write', cmd);
             }
             else{
                 reject(Error("parameter error"));
@@ -1416,8 +886,8 @@ var _DsoCtrl = function(dsoObj) {
                 var cmd = [
                         {id:chid, prop:'ChState', arg:'OFF', cb:chstate, method:'set'}
                     ];
-                self.cmdSequence = self.cmdSequence.concat(cmd);
-                self.emit('cmd_write', cmd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+                self.cmdEvent.emit('cmd_write', cmd);
             }
             else{
                 reject(Error("parameter error"));
@@ -1452,8 +922,8 @@ var _DsoCtrl = function(dsoObj) {
             var cmd = [
                     {id:'sys',prop:'DispOut',arg:'OFF',cb:snapshot,method:'get'}
                 ];
-            self.cmdSequence = self.cmdSequence.concat(cmd);
-            self.emit('cmd_write', cmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+            self.cmdEvent.emit('cmd_write', cmd);
         });
     }).bind(dsoObj);
 
@@ -1485,8 +955,8 @@ var _DsoCtrl = function(dsoObj) {
                         {id:'acq',prop:'AcqHeader',arg:'OFF',cb:null,method:'set'},
                         {id:ch,prop:'AcqMemory',arg:'',cb:rawData,method:'get'}
                     ];
-                self.cmdSequence = self.cmdSequence.concat(cmd);
-                self.emit('cmd_write', cmd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+                self.cmdEvent.emit('cmd_write', cmd);
 
             }else {
                 reject(Error("error null parameter"));
@@ -1551,8 +1021,8 @@ var _DsoCtrl = function(dsoObj) {
                 ];
             // this.GetRawdata(ch,callback);
 
-            self.cmdSequence = self.cmdSequence.concat(trigCmd);
-            self.emit('cmd_write', trigCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(trigCmd);
+            self.cmdEvent.emit('cmd_write', trigCmd);
         });
     }).bind(dsoObj);
 
@@ -1632,9 +1102,9 @@ var _DsoCtrl = function(dsoObj) {
 
             if(cmd.length > 0){
                 cmd[cmd.length-1].cb = edgeTrig;
-                self.cmdSequence = self.cmdSequence.concat(cmd);
-                // log(self.cmdSequence);
-                self.emit('cmd_write', cmd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(cmd);
+                // log(self.dev.cmdSequence);
+                self.cmdEvent.emit('cmd_write', cmd);
             }
             else{
                 log('setVertical do nothing');
@@ -1697,10 +1167,10 @@ var _DsoCtrl = function(dsoObj) {
             ];
 
             if(self.sys.staMode === 'ON'){
-                self.cmdSequence = self.cmdSequence.concat(measStd);
+                self.dev.cmdSequence = self.dev.cmdSequence.concat(measStd);
             }
-            self.cmdSequence = self.cmdSequence.concat(measVal);
-            self.emit('cmd_write', measCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(measVal);
+            self.cmdEvent.emit('cmd_write', measCmd);
         });
     }).bind(dsoObj);
 
@@ -1771,12 +1241,12 @@ var _DsoCtrl = function(dsoObj) {
             }
 
             if (conf.src2 !== undefined) {
-                self.cmdSequence=self.cmdSequence.concat(measSrc2);
+                self.dev.cmdSequence=self.dev.cmdSequence.concat(measSrc2);
             }
 
-            self.cmdSequence = self.cmdSequence.concat(measSet);
-            self.cmdSequence = self.cmdSequence.concat(measType);
-            self.emit('cmd_write', measSet);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(measSet);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(measType);
+            self.cmdEvent.emit('cmd_write', measSet);
         });
     }).bind(dsoObj);
 
@@ -1804,8 +1274,8 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'StatisticMode',arg:'ON',cb:measCmd,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(measCmd);
-            self.emit('cmd_write', measCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(measCmd);
+            self.cmdEvent.emit('cmd_write', measCmd);
         });
     }).bind(dsoObj);
 
@@ -1832,8 +1302,8 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'StatisticMode',arg:'OFF',cb:statistic,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
@@ -1861,8 +1331,8 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'StatisticStaWeight',arg:weight,cb:statistic,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
@@ -1875,6 +1345,7 @@ var _DsoCtrl = function(dsoObj) {
 */
     dsoctrl.run = (function(){
         var self = this;
+        log('run');
         return new Promise(function(resolve, reject) {
             function sysRun(e){
                 if (e) {
@@ -1885,12 +1356,14 @@ var _DsoCtrl = function(dsoObj) {
                 }
 
             };
+            log('run promise');
             var sysCmd = [
                 {id:'sys',prop:'RUN',arg:'',cb:sysRun,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            log('run :send cmd_write');
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
@@ -1918,8 +1391,8 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'STOP',arg:'',cb:sysStop,method:'set'}
             ];
             log('set dos stop');
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
@@ -1946,8 +1419,8 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'SINGLE',arg:'',cb:sysSingle,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
@@ -1974,8 +1447,8 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'AUTOSET',arg:'',cb:sysAutoset,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
@@ -2002,14 +1475,81 @@ var _DsoCtrl = function(dsoObj) {
                 {id:'sys',prop:'FORCE',arg:'',cb:sysForce,method:'set'}
             ];
 
-            self.cmdSequence = self.cmdSequence.concat(sysCmd);
-            self.emit('cmd_write', sysCmd);
+            self.dev.cmdSequence = self.dev.cmdSequence.concat(sysCmd);
+            self.cmdEvent.emit('cmd_write', sysCmd);
         });
     }).bind(dsoObj);
 
 
     return dsoctrl;
 
+}
+
+
+var cmd_write = function() {
+    var self = this;
+    var cb = null;
+
+    var cmd = [];
+    // log(this.dev.cmdSequence);
+    if (this.dev.asyncWrite === 'busy') {
+        log('async write busy');
+        if (this.dev.writeTimeoutObj === null) {
+            log('set timeout');
+            this.dev.writeTimeoutObj = setTimeout(function() {
+                log('cmd_write reissue');
+                self.dev.writeTimeoutObj = null;
+                cmd_write.call(self);
+            },100);
+        }
+        return;
+    }
+
+    if (this.dev.cmdSequence.length === 0) {
+        if (this.dev.writeTimeoutObj !== null) {
+            clearTimeout(this.dev.writeTimeoutObj);
+            // this.writeTimeoutObj=null;
+            this.dev.emit('cmd_write', self.dev.cmdSequence);
+        }
+        log('cmdSequence = 0');
+        return;
+    }
+
+    for (var i = 0, len = this.dev.cmdSequence.length; i < len; i++) {
+        cmd[i] = this.dev.cmdSequence.shift();
+
+        // avoid missing async callback, flush command buffer when find cb exist
+        if (cmd[i].cb !== null){
+            cb = cmd[i].cb;
+            if(i < len-1 ){
+                this.dev.writeTimeoutObj = setTimeout(function() {
+                    log('cmd_write reissue');
+                    self.dev.writeTimeoutObj = null;
+                    cmd_write.call(self);
+                },100);
+            }
+            break;
+        }
+    }
+    self.dev.asyncWrite = 'busy';
+    async.eachSeries(cmd,
+        function(item,done) {
+            log(item);
+            if(item.method === 'set') {
+                log(self['sys']);
+                self[item.id].prop.set(item.prop, item.arg, done);
+            }else {
+                self[item.id].prop.get(item.prop, item.arg, done);
+            }
+        },function(err, results) {
+            log('err: '+err);
+            self.dev.asyncWrite = 'done';
+            self.dev.state.conn = 'connected';
+            log('async write done');
+            if (cb)
+                cb(err);
+        }
+    );
 }
 
 /**
@@ -2030,7 +1570,8 @@ exports.DsoNet  = function(port, host_addr) {
     //     resolve(_DsoCtrl(dsoObj));
     // });
 
-    var dsoObj = _DsoObj();
+    var dsoObj = new _DsoObj();
+
     BindNetObj(dsoObj, port, host_addr);
     // this = _DsoCtrl(dsoObj);
     // return this;
@@ -2049,7 +1590,9 @@ exports.DsoNet  = function(port, host_addr) {
 *
 *   @return {Object} Return dsoctrl object
 */
+
 exports.DsoUSB  = function(device) {
+
     // return new Promise(function(resolve, reject) {
     //     var dsoObj = _DsoObj();
     //     usbDev.BindUsbObj(dsoObj, vid, pid);
@@ -2057,8 +1600,20 @@ exports.DsoUSB  = function(device) {
     // });
 
 
-    var dsoObj = _DsoObj();
-    usbDev.BindUsbObj(dsoObj, device);
+    var dsoObj = new _DsoObj();
+    // console.log(dsoObj);
+
+    console.log(dsoObj.dev.usbConnect);
+
+    if(dsoObj.dev.usbConnect)
+        console.log('we have usbConnect');
+    else
+        console.log('we dont have usbConnect');
+    dsoObj.cmdEvent.on('cmd_write', function(cmd){
+        log('trigger cmdEvent');
+        cmd_write.call(dsoObj);
+    });
+    usbDev.BindUsbObj(dsoObj.dev, device);
     // this = _DsoCtrl(dsoObj);
 
     // return this;

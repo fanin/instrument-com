@@ -57,18 +57,18 @@ function usbRemoveEvent(device){
     }
   }
 };
-function getDevDriver(id){
-      var i,len;
-      var devDri={};
+// function getDevDriver(id){
+//       var i,len;
+//       var devDri={};
 
-      for(i=0,len=connectedDevice.length; i<len; i++){
-        if(id === connectedDevice[i].id){
-          devDri =connectedDevice[i].devDri;
-          return devDri;
-        }
-      }
-      return null;
-}
+//       for(i=0,len=connectedDevice.length; i<len; i++){
+//         if(id === connectedDevice[i].id){
+//           devDri =connectedDevice[i].devDri;
+//           return devDri;
+//         }
+//       }
+//       return null;
+// }
 
 updateValidDevice();
 usbDev.regAddEvent(usbAddEvent);
